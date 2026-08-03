@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meteoflutter/models/clima_modelo1.dart';
 import 'package:meteoflutter/widgets/tarjeta_clima_principal.dart';
 import 'package:meteoflutter/widgets/tarjeta_detalle_clima.dart';
+import 'package:meteoflutter/widgets/barra_inferior_clima.dart'; // <--- No olvides importar el nuevo widget
 
 class TemperaturaPantallaDinamica extends StatelessWidget {
   final ClimaModelo1 clima;
@@ -16,15 +17,21 @@ class TemperaturaPantallaDinamica extends StatelessWidget {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
+      // --- USAMOS EL WIDGET EXTERNO DE LA BARRA INFERIOR ---
+      bottomNavigationBar: BarraInferiorClima(
+        onVolverPressed: () {
+          Navigator.pop(context);
+        },
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Usamos el widget externo de la tarjeta principal
+            // Tarjeta principal con el mapa y la temperatura
             TarjetaClimaPrincipal(clima: clima),
             const SizedBox(height: 20),
 
-            // Detalles en cuadrícula usando el widget externo
+            // Detalles en cuadrícula (Sensación térmica y Humedad)
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,

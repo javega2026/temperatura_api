@@ -17,8 +17,10 @@ class TarjetaClimaPrincipal extends StatelessWidget {
       child: Column(
         children: [
           // El mapa dinámico por coordenadas
+          
+          
           Image.network(
-            'https://static-maps.yandex.ru/1.x/?ll=${clima.lon},${clima.lat}&size=600,200&z=10&l=map&pt=${clima.lon},${clima.lat},pm2rdm',
+            'https://static-maps.yandex.ru/1.x/?ll=${clima.lon},${clima.lat}&size=600,200&z=10&l=map&pt=${clima.lon},${clima.lat},pm2rdm&lang=es_ES',
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
@@ -37,6 +39,9 @@ class TarjetaClimaPrincipal extends StatelessWidget {
               ),
             ),
           ),
+
+
+
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
