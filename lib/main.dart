@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
-import 'package:meteoflutter/screens/temperatura_pantalla.dart';
+import 'package:meteoflutter/screens/burcar_pantalla.dart';
+
 import 'package:meteoflutter/screens/temperatura_pantalla_dinamica.dart';
 
 
@@ -20,7 +21,7 @@ class MiAplicacion extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       //home: const TemperaturaPantalla(),
-       home: const TemperaturaPantallaDinamica(),
+       home: const BuscarPantalla(),
     );
   }
 }
