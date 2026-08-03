@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../screens/pantalla_grafica.dart';
 import '../screens/pantalla_medusas.dart';
 import '../screens/ejemplo_datos_grafica.dart';
 
