@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meteoflutter/models/clima_modelo1.dart';
-import 'package:meteoflutter/servicios/clima_servicio1.dart'; // Asegura la ruta
-// Asegura la ruta
+import 'package:meteoflutter/servicios/clima_servicio1.dart';
 
 class TemperaturaPantallaDinamica extends StatefulWidget {
   const TemperaturaPantallaDinamica({super.key});
@@ -11,18 +10,13 @@ class TemperaturaPantallaDinamica extends StatefulWidget {
 }
 
 class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamica> {
-  // Controlador para el campo de texto
   final TextEditingController _controladorCiudad = TextEditingController();
-  
-  // Instancia del servicio
   final ClimaServicio1 _climaServicio = ClimaServicio1();
   
-  // Variable para guardar el clima obtenido (inicialmente nulo)
   ClimaModelo1? _climaActual;
   bool _cargando = false;
   String? _mensajeError;
 
-  // Función para llamar al servicio y actualizar el estado
   void _buscarClima() async {
     final ciudad = _controladorCiudad.text.trim();
     if (ciudad.isEmpty) return;
@@ -30,7 +24,6 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
     setState(() {
       _cargando = true;
       _mensajeError = null;
-      // Opcional: limpiar el clima anterior mientras carga
       _climaActual = null;
     });
 
@@ -48,7 +41,6 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
 
   @override
   Widget build(BuildContext context) {
-    // Título dinámico del AppBar
     String tituloAppBar = 'Buscador de Clima';
     if (_climaActual != null) {
       tituloAppBar = 'Clima en ${_climaActual!.nombreCiudad}';
@@ -59,12 +51,13 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
         title: Text(tituloAppBar),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
+        // Sin botón de atrás porque es la pantalla principal
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // --- NUEVO: Campo de búsqueda ---
+            // Campo de búsqueda
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: TextField(
@@ -77,19 +70,16 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.send),
-                    onPressed: _buscarClima, // Ejecuta la búsqueda
+                    onPressed: _buscarClima,
                   ),
                 ),
-                // Permite buscar también al pulsar "Enter" en el teclado
                 onSubmitted: (value) => _buscarClima(),
               ),
             ),
 
-            // --- Indicador de carga ---
             if (_cargando) 
               const Center(child: CircularProgressIndicator()),
 
-            // --- Mensaje de error ---
             if (_mensajeError != null)
               Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -100,46 +90,72 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
                 ),
               ),
 
-            // --- MUESTRA DE DATOS (Solo si _climaActual no es nulo) ---
             if (_climaActual != null) ...[
-              // Tarjeta principal de Temperatura
+              // Tarjeta principal con el Mapa de Coordenadas y la Temperatura
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                color: Colors.blue[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.cloud, size: 80, color: Colors.blueAccent),
-                      const SizedBox(height: 10),
-                      Text(
-                        // Usamos el dato dinámico
-                        '${_climaActual!.temperatura.toStringAsFixed(1)} °C',
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    // --- MAPA DINÁMICO POR COORDENADAS (Sin Key) ---
+                    Image.network(
+                      'https://static-maps.yandex.ru/1.x/?ll=${_climaActual!.lon},${_climaActual!.lat}&size=600,200&z=10&l=map&pt=${_climaActual!.lon},${_climaActual!.lat},pm2rdm',
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const SizedBox(
+                          height: 140,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 140,
+                        color: Colors.blue[50],
+                        child: const Center(
+                          child: Icon(Icons.map, size: 50, color: Colors.blueAccent),
                         ),
                       ),
-                      const SizedBox(height: 5),
-                      // NOTA: He quitado la descripción larga porque el modelo
-                      // simplificado no la trae, pero se puede añadir.
-                      const SizedBox(height: 15),
-                      Text(
-                        'Sensación térmica: ${_climaActual!.sensTermica.toStringAsFixed(1)} °C',
-                        style: const TextStyle(fontSize: 14),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          Text(
+                            _climaActual!.nombreCiudad,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${_climaActual!.temperatura.toStringAsFixed(1)} °C',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'Sensación térmica: ${_climaActual!.sensTermica.toStringAsFixed(1)} °C',
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Detalles en cuadrícula (Sensación térmica y Humedad)
-              // He simplificado a 2 tarjetas para ajustarme a tu modelo de 4 campos
+              // Detalles en cuadrícula
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
@@ -161,7 +177,7 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
                 ],
               ),
             ],
-            // Si no se ha buscado nada aún, mostrar un mensaje inicial
+
             if (_climaActual == null && !_cargando && _mensajeError == null)
               const Padding(
                 padding: EdgeInsets.only(top: 50),
@@ -173,7 +189,6 @@ class _TemperaturaPantallaDinamicaState extends State<TemperaturaPantallaDinamic
     );
   }
 
-  // Widget auxiliar para las tarjetas pequeñas de detalles
   Widget _buildTarjetasDetalle(String titulo, String valor, IconData icono) {
     return Card(
       elevation: 2,
