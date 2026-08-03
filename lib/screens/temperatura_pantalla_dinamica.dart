@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meteoflutter/models/clima_modelo1.dart';
 import 'package:meteoflutter/widgets/tarjeta_clima_principal.dart';
 import 'package:meteoflutter/widgets/tarjeta_detalle_clima.dart';
-import 'package:meteoflutter/widgets/barra_inferior_clima.dart'; // <--- No olvides importar el nuevo widget
+import 'package:meteoflutter/widgets/barra_inferior_clima.dart'; 
 
 class TemperaturaPantallaDinamica extends StatelessWidget {
   final ClimaModelo1 clima;

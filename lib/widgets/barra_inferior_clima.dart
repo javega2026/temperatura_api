@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../screens/pantalla_grafica.dart';
+import '../screens/pantalla_medusas.dart';
+import '../screens/ejemplo_datos_grafica.dart';
 
 class BarraInferiorClima extends StatelessWidget {
   final VoidCallback onVolverPressed;
@@ -22,12 +25,20 @@ class BarraInferiorClima extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Botón izquierdo (Favoritos)
+            // Botón izquierdo (Gráfica)
             IconButton(
-              icon: const Icon(Icons.favorite_border, color: Colors.white),
-              onPressed: onFavoritosPressed ?? () {},
-              tooltip: 'Favoritos',
-              
+              icon: const Icon(Icons.bar_chart, color: Colors.white),
+              onPressed: onFavoritosPressed ?? () {
+                Navigator.push(
+                  context,
+                 // MaterialPageRoute(builder: (context) => const PantallaGrafica()),
+                   MaterialPageRoute(builder: (context) => const TemperaturaGraficoWidget()),
+
+
+                  
+                );
+              },
+              tooltip: 'Ver Gráfica',
             ),
 
             // Botón central: Volver atrás
@@ -43,11 +54,16 @@ class BarraInferiorClima extends StatelessWidget {
               ),
             ),
 
-            // Botón derecho (Actualizar)
+            // Botón derecho (Medusas)
             IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: onActualizarPressed ?? () {},
-              tooltip: 'Actualizar',
+              icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              onPressed: onActualizarPressed ?? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PantallaMedusas()),
+                );
+              },
+              tooltip: 'Rango de Medusas',
             ),
           ],
         ),
