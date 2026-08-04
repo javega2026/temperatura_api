@@ -6,6 +6,7 @@ class PlayaModelo {
 }
 
 // --- ARRAY COMPLETO CON LAS 15 PLAYAS DE MÁLAGA CAPITAL ---
+// ignore: unused_element
 final List<PlayaModelo> _playasMalaga = [
   PlayaModelo(id: 'guadalmar', nombre: 'Playa de Guadalmar'),
   PlayaModelo(id: 'san_andres', nombre: 'Playa de San Andrés'),

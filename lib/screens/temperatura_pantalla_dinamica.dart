@@ -27,21 +27,21 @@ class TemperaturaPantallaDinamica extends StatelessWidget {
         nombreCiudad: clima.nombreCiudad,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             // Tarjeta principal con el mapa y la temperatura
             TarjetaClimaPrincipal(clima: clima),
             const SizedBox(height: 20),
 
-            // Detalles en cuadrícula (Sensación térmica y Humedad)
+            // Detalles en cuadrícula (Sensación térmica, Humedad, Viento y Presión)
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.5,
+              crossAxisSpacing: 14, // <-- Más separación horizontal
+              mainAxisSpacing: 14,  // <-- Más separación vertical
+              childAspectRatio: 1.7, // <-- Aumentado para hacerlas más pequeñas y achatadas
               children: [
                 TarjetaDetalleClima(
                   titulo: 'Sensación Térmica',

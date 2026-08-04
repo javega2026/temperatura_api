@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:meteoflutter/models/clima_modelo1.dart';
 import 'package:meteoflutter/servicios/clima_servicio1.dart';
 import 'package:meteoflutter/screens/temperatura_pantalla_dinamica.dart'; // Importa tu otra pantalla
 
@@ -32,6 +31,10 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
     });
 
     if (resultado != null) {
+    // Comprobamos si el widget sigue activo tras la operación asíncrona
+      if (!mounted) return;
+    
+    
       // Navegamos a la segunda pantalla pasando el objeto con los datos y las coordenadas
       Navigator.push(
         context,

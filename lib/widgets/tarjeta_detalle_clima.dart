@@ -28,7 +28,7 @@ class TarjetaDetalleClima extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               titulo,
-              style: const TextStyle(fontSize: 20, color: Colors.grey),
+              style: const TextStyle(fontSize: 20, color: Colors.black54,fontWeight:FontWeight.w600),
             ),
             const SizedBox(height: 4),
             Text(

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:meteoflutter/models/clima_modelo1.dart';
 
 class ClimaServicio1 {
@@ -16,7 +17,7 @@ class ClimaServicio1 {
       }
       return null;
     } catch (e) {
-      print('Error al obtener el clima: $e');
+      debugPrint('Error al obtener el clima: $e');
       return null;
     }
   }

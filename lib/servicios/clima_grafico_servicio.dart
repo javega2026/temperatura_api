@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:meteoflutter/models/clima_grafico_modelo.dart';
 
 class ClimaGraficoServicio {
@@ -16,7 +17,7 @@ class ClimaGraficoServicio {
       }
       return null;
     } catch (e) {
-      print('Error al obtener los datos de la gráfica: $e');
+      debugPrint('Error al obtener los datos de la gráfica: $e');
       return null;
     }
   }
