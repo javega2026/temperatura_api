@@ -1,11 +1,14 @@
-
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:meteoflutter/screens/burcar_pantalla.dart';
 
+void main() async {
+  // 3. Inicializar Hive para Flutter
+  await Hive.initFlutter();
 
+  // 4. Abrir la caja donde guardaremos nuestros datos
+  await Hive.openBox('configuracionBox');
 
-
-void main() {
   runApp(const MiAplicacion());
 }
 
@@ -18,10 +21,9 @@ class MiAplicacion extends StatelessWidget {
       title: 'Meteorologico App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+        primarySwatch: Colors.blue),
       //home: const TemperaturaPantalla(),
-       home: const BuscarPantalla(),
+      home: const BuscarPantalla(),
     );
   }
 }

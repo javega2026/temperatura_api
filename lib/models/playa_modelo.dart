@@ -5,9 +5,9 @@ class PlayaModelo {
   PlayaModelo({required this.id, required this.nombre});
 }
 
-// --- ARRAY COMPLETO CON LAS 15 PLAYAS DE MÁLAGA CAPITAL ---
-// ignore: unused_element
-final List<PlayaModelo> _playasMalaga = [
+// --- ARRAY COMPLETO CON LAS 15 PLAYAS DE MÁLAGA CAPITAL  // ignore: unused_element ---
+
+final List<PlayaModelo> playasMalaga = [
   PlayaModelo(id: 'guadalmar', nombre: 'Playa de Guadalmar'),
   PlayaModelo(id: 'san_andres', nombre: 'Playa de San Andrés'),
   PlayaModelo(id: 'misericordia', nombre: 'Playa de La Misericordia'),
