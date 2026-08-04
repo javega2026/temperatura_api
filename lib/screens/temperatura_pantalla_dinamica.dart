@@ -53,6 +53,16 @@ class TemperaturaPantallaDinamica extends StatelessWidget {
                   valor: '${clima.humedad} %',
                   icono: Icons.water_drop,
                 ),
+                TarjetaDetalleClima(
+                  titulo: 'Viento',
+                  valor: '${clima.vientoVelocidad} km/h',
+                  icono: Icons.air,
+                ),
+                TarjetaDetalleClima(
+                  titulo: 'Presión',
+                  valor: '${clima.presion} hPa',
+                  icono: Icons.speed,
+                ),
               ],
             ),
           ],

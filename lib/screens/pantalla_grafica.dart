@@ -51,17 +51,8 @@ class _PantallaGraficaState extends State<PantallaGrafica> {
             return const Center(child: Text('La lista de días está vacía'));
           }
 
-          // Convertimos las temperaturas máximas en puntos (FlSpot) para la gráfica
-          final List<FlSpot> spotsMax = [];
-          for (int i = 0; i < climaGrafico.temperaturasMax.length; i++) {
-            spotsMax.add(FlSpot(i.toDouble(), climaGrafico.temperaturasMax[i]));
-          }
-
-          // Convertimos las temperaturas mínimas en puntos (FlSpot) para la gráfica
-          final List<FlSpot> spotsMin = [];
-          for (int i = 0; i < climaGrafico.temperaturasMin.length; i++) {
-            spotsMin.add(FlSpot(i.toDouble(), climaGrafico.temperaturasMin[i]));
-          }
+          final spotsMax = _crearSpots(climaGrafico.temperaturasMax);
+          final spotsMin = _crearSpots(climaGrafico.temperaturasMin);
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -74,125 +65,146 @@ class _PantallaGraficaState extends State<PantallaGrafica> {
                 const SizedBox(height: 20),
                 Expanded(
                   child: LineChart(
-                    LineChartData(
-                      minY: 18.0, 
-                      maxY: 42,
-                      gridData: const FlGridData(show: true),
-                      lineTouchData: LineTouchData(
-                        touchTooltipData: LineTouchTooltipData(
-                          getTooltipColor: (touchedSpot) => Colors.blueGrey.shade800,
-                          getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                            return touchedSpots.map((spot) {
-                              final textStyle = TextStyle(
-                                color: spot.bar.color ?? Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              );
-                              return LineTooltipItem(
-                                '${spot.y.toStringAsFixed(1)}°', 
-                                textStyle,
-                              );
-                            }).toList();
-                          },
-                        ),
-                      ),
-                      titlesData: FlTitlesData(
-                        rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 35,
-                            getTitlesWidget: (value, meta) {
-                              return Text(
-                                '${value.toInt()}°',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black54,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 30, // Damos algo de espacio vertical abajo
-                            getTitlesWidget: (value, meta) {
-                              int index = value.toInt();
-                              if (index >= 0 && index < climaGrafico.tiempos.length) {
-                                String fechaCompleta = climaGrafico.tiempos[index];
-                                String corto = fechaCompleta.length >= 10 
-                                    ? fechaCompleta.substring(5) 
-                                    : fechaCompleta;
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 6.0),
-                                  child: Text(
-                                    corto, 
-                                    style: const TextStyle(
-                                      fontSize: 11, // <-- Reducido de 14 a 11 para que no se solapen
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                );
-                              }
-                              return const Text('');
-                            },
-                            interval: 1,
-                          ),
-                        ),
-                      ),
-                      borderData: FlBorderData(show: true),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: spotsMax,
-                          isCurved: true,
-                          color: Colors.redAccent,
-                          barWidth: 3,
-                          dotData: const FlDotData(show: true),
-                          belowBarData: BarAreaData(
-                            show: true,
-                            color: Colors.redAccent.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        LineChartBarData(
-                          spots: spotsMin,
-                          isCurved: true,
-                          color: Colors.blueAccent,
-                          barWidth: 3,
-                          dotData: const FlDotData(show: true),
-                          belowBarData: BarAreaData(
-                            show: true,
-                            color: Colors.blueAccent.withValues(alpha: 0.1),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildLineChartData(spotsMax, spotsMin, climaGrafico.tiempos),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.circle, color: Colors.redAccent, size: 14),
-                    SizedBox(width: 4),
-                    Text('Máxima (°C)'),
-                    SizedBox(width: 20),
-                    Icon(Icons.circle, color: Colors.blueAccent, size: 14),
-                    SizedBox(width: 4),
-                    Text('Mínima (°C)'),
-                  ],
-                ),
+                _buildLeyenda(),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  // Convierte listas de números en puntos (FlSpot) para la gráfica
+  List<FlSpot> _crearSpots(List<double> temperaturas) {
+    List<FlSpot> spots = [];
+    for (int i = 0; i < temperaturas.length; i++) {
+      spots.add(FlSpot(i.toDouble(), temperaturas[i]));
+    }
+    return spots;
+  }
+
+  // Configuración principal del gráfico de líneas
+  LineChartData _buildLineChartData(
+      List<FlSpot> spotsMax, List<FlSpot> spotsMin, List<String> tiempos) {
+    return LineChartData(
+      minY: 18.0,
+      maxY: 42.0,
+      gridData: const FlGridData(show: true),
+      borderData: FlBorderData(show: true),
+      lineTouchData: _buildLineTouchData(),
+      titlesData: _buildTitlesData(tiempos),
+      lineBarsData: [
+        _buildLineBarData(spotsMax, Colors.redAccent),
+        _buildLineBarData(spotsMin, Colors.blueAccent),
+      ],
+    );
+  }
+
+  // Configuración de la barra (línea) individual de la gráfica
+  LineChartBarData _buildLineBarData(List<FlSpot> spots, Color color) {
+    return LineChartBarData(
+      spots: spots,
+      isCurved: true,
+      color: color,
+      barWidth: 3,
+      dotData: const FlDotData(show: true),
+      belowBarData: BarAreaData(
+        show: true,
+        color: color.withValues(alpha: 0.1),
+      ),
+    );
+  }
+
+  // Configuración de los tooltips (cuadros flotantes al tocar un punto)
+  LineTouchData _buildLineTouchData() {
+    return LineTouchData(
+      touchTooltipData: LineTouchTooltipData(
+        getTooltipColor: (touchedSpot) => Colors.blueGrey.shade800,
+        getTooltipItems: (List<LineBarSpot> touchedSpots) {
+          return touchedSpots.map((spot) {
+            final textStyle = TextStyle(
+              color: spot.bar.color ?? Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            );
+            return LineTooltipItem(
+              '${spot.y.toStringAsFixed(1)}°',
+              textStyle,
+            );
+          }).toList();
+        },
+      ),
+    );
+  }
+
+  // Configuración de los títulos y ejes (izquierdo e inferior)
+  FlTitlesData _buildTitlesData(List<String> tiempos) {
+    return FlTitlesData(
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 35,
+          getTitlesWidget: (value, meta) {
+            return Text(
+              '${value.toInt()}°',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+              ),
+            );
+          },
+        ),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 30,
+          interval: 1,
+          getTitlesWidget: (value, meta) {
+            int index = value.toInt();
+            if (index >= 0 && index < tiempos.length) {
+              String fechaCompleta = tiempos[index];
+              String corto = fechaCompleta.length >= 10
+                  ? fechaCompleta.substring(5)
+                  : fechaCompleta;
+              return Padding(
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Text(
+                  corto,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            }
+            return const Text('');
+          },
+        ),
+      ),
+    );
+  }
+
+  // Widget inferior de leyenda de colores
+  Widget _buildLeyenda() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: const [
+        Icon(Icons.circle, color: Colors.redAccent, size: 14),
+        SizedBox(width: 4),
+        Text('Máxima (°C)'),
+        SizedBox(width: 20),
+        Icon(Icons.circle, color: Colors.blueAccent, size: 14),
+        SizedBox(width: 4),
+        Text('Mínima (°C)'),
+      ],
     );
   }
 }
