@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meteoflutter/models/clima_modelo1.dart';
 import 'package:meteoflutter/widgets/tarjeta_clima_principal.dart';
 import 'package:meteoflutter/widgets/tarjeta_detalle_clima.dart';
-import 'package:meteoflutter/widgets/barra_inferior_clima.dart'; 
+import 'package:meteoflutter/widgets/barra_inferior_clima.dart';
 
 class TemperaturaPantallaDinamica extends StatelessWidget {
   final ClimaModelo1 clima;
@@ -22,6 +22,9 @@ class TemperaturaPantallaDinamica extends StatelessWidget {
         onVolverPressed: () {
           Navigator.pop(context);
         },
+        latitud: clima.lat,
+        longitud: clima.lon,
+        nombreCiudad: clima.nombreCiudad,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

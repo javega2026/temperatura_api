@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:meteoflutter/screens/pantalla_grafica.dart';
 import '../screens/pantalla_medusas.dart';
-import '../screens/ejemplo_datos_grafica.dart';
 
 class BarraInferiorClima extends StatelessWidget {
   final VoidCallback onVolverPressed;
   final VoidCallback? onFavoritosPressed;
   final VoidCallback? onActualizarPressed;
 
+  final double latitud;
+  final double longitud;
+  final String nombreCiudad;
+
   const BarraInferiorClima({
     super.key,
     required this.onVolverPressed,
     this.onFavoritosPressed,
     this.onActualizarPressed,
+    required this.latitud,
+    required this.longitud,required this.nombreCiudad
   });
 
   @override
@@ -24,27 +30,31 @@ class BarraInferiorClima extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Botón izquierdo (Gráfica)
+            // Botón Gráfica
             IconButton(
               icon: const Icon(Icons.bar_chart, color: Colors.white),
-              onPressed: onFavoritosPressed ?? () {
-                Navigator.push(
-                  context,
-                 // MaterialPageRoute(builder: (context) => const PantallaGrafica()),
-                   MaterialPageRoute(builder: (context) => const TemperaturaGraficoWidget()),
+              onPressed:
+                  onFavoritosPressed ??
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PantallaGrafica(
+                          latitud: latitud,
+                          longitud: longitud,
+                          nombreCiudad: nombreCiudad,
+                        ),
+                      ),
 
-
-                  
-                );
-              },
+                      // MaterialPageRoute(builder: (context) => const TemperaturaGraficoWidget()),
+                    );
+                  },
               tooltip: 'Ver Gráfica',
             ),
 
             // Botón central: Volver atrás
             TextButton.icon(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
               onPressed: onVolverPressed,
               icon: const Icon(Icons.arrow_back),
               label: const Text(
@@ -55,13 +65,20 @@ class BarraInferiorClima extends StatelessWidget {
 
             // Botón derecho (Medusas)
             IconButton(
-              icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
-              onPressed: onActualizarPressed ?? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PantallaMedusas()),
-                );
-              },
+              icon: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+              ),
+              onPressed:
+                  onActualizarPressed ??
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PantallaMedusas(),
+                      ),
+                    );
+                  },
               tooltip: 'Rango de Medusas',
             ),
           ],
