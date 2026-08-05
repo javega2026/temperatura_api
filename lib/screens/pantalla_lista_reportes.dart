@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart'; // Importamos la librería intl
 
 class PantallaListaReportes extends StatelessWidget {
   const PantallaListaReportes({super.key});
@@ -14,6 +15,9 @@ class PantallaListaReportes extends StatelessWidget {
       builder: (context, Box box, _) {
         final ahora = DateTime.now();
 
+        // Definimos el formato en el que guardamos las fechas
+        final formatoFecha = DateFormat('d/M/yyyy - HH:mm');
+
         // Filtrar y eliminar automáticamente los reportes con más de 1 hora de antigüedad
         final keys = box.keys
             .where((key) => key.toString().startsWith('reporte_'))
@@ -24,30 +28,19 @@ class PantallaListaReportes extends StatelessWidget {
           if (rawData != null) {
             try {
               final data = jsonDecode(rawData);
-              final fechaHoraStr =
-                  data['fecha_hora']; // Formato: 'd/M/yyyy - HH:mm'
+              final String? fechaHoraStr = data['fecha_hora'];
 
               if (fechaHoraStr != null) {
-                final partes = fechaHoraStr.split(' - ');
-                final fechaPartes = partes[0].split('/');
-                final horaPartes = partes[1].split(':');
+                // Parseamos la fecha de forma limpia con intl
+                final DateTime fechaReporte = formatoFecha.parse(fechaHoraStr);
 
-                final int dia = int.parse(fechaPartes[0]);
-                final int mes = int.parse(fechaPartes[1]);
-                final int anio = int.parse(fechaPartes[2]);
-                final int hora = int.parse(horaPartes[0]);
-                final int minuto = int.parse(horaPartes[1]);
-
-                final fechaReporte = DateTime(anio, mes, dia, hora, minuto);
-
-                // Si ha pasado 1 hora o más, se borra de Hive
+                // Si ha pasado 1 hora o más, se borra de Hive (puedes cambiar a .inDays >= 1 si prefieres un día)
                 if (ahora.difference(fechaReporte).inHours >= 1) {
                   box.delete(key);
                 }
 
-                // Si ha pasado 1 día o más, se borra de Hive
-                //if (ahora.difference(fechaReporte).inDays >= 1) {
-                //  box.delete(key);
+                // if (ahora.difference(fechaReporte).inDays >= 1) {
+                //   box.delete(key);
                 // }
               }
             } catch (_) {
