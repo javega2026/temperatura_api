@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meteoflutter/screens/pantalla_grafica.dart';
-
 import 'package:meteoflutter/screens/pantalla_medusas.dart';
-
 
 class BarraInferiorClima extends StatelessWidget {
   final VoidCallback onVolverPressed;
@@ -19,8 +17,14 @@ class BarraInferiorClima extends StatelessWidget {
     this.onFavoritosPressed,
     this.onActualizarPressed,
     required this.latitud,
-    required this.longitud,required this.nombreCiudad
+    required this.longitud,
+    required this.nombreCiudad,
   });
+
+  bool _esMalaga() {
+    final ciudadLower = nombreCiudad.toLowerCase();
+    return ciudadLower.contains('málaga') || ciudadLower.contains('malaga');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +51,6 @@ class BarraInferiorClima extends StatelessWidget {
                           nombreCiudad: nombreCiudad,
                         ),
                       ),
-
-                      // MaterialPageRoute(builder: (context) => const TemperaturaGraficoWidget()),
                     );
                   },
               tooltip: 'Ver Gráfica',
@@ -65,22 +67,42 @@ class BarraInferiorClima extends StatelessWidget {
               ),
             ),
 
-            // Botón derecho (Medusas)
+            // Botón derecho (Medusas) con validación de Málaga
             IconButton(
               icon: const Icon(
                 Icons.warning_amber_rounded,
                 color: Colors.white,
               ),
-              onPressed:
-                  onActualizarPressed ??
-                  () {
+              onPressed: () {
+                if (_esMalaga()) {
+                  if (onActualizarPressed != null) {
+                    onActualizarPressed!();
+                  } else {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>  PantallaMedusas(),
+                        builder: (context) => const PantallaMedusas(),
                       ),
                     );
-                  },
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Los reportes de medusas solo están disponibles para Málaga.',
+                      ),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        bottom: 80,
+                      ),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+              },
               tooltip: 'Rango de Medusas',
             ),
           ],
