@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meteoflutter/screens/pantalla_grafica.dart';
-import '../screens/pantalla_medusas.dart';
+
+import 'package:meteoflutter/screens/pantalla_medusas.dart';
+
 
 class BarraInferiorClima extends StatelessWidget {
   final VoidCallback onVolverPressed;
@@ -75,7 +77,7 @@ class BarraInferiorClima extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PantallaMedusas(),
+                        builder: (context) =>  PantallaMedusas(),
                       ),
                     );
                   },

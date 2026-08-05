@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/playa_modelo.dart';
+import 'pantalla_lista_reportes.dart';
 
 class PantallaMedusas extends StatefulWidget {
   const PantallaMedusas({super.key});
@@ -10,7 +12,6 @@ class PantallaMedusas extends StatefulWidget {
 }
 
 class _PantallaMedusasState extends State<PantallaMedusas> {
-  // Variable para almacenar el id de la playa seleccionada
   String? playaIdSeleccionada;
   String nivelMedusas = 'Ninguna';
 
@@ -23,6 +24,21 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
         title: const Text('Reporte de Medusas'),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
+        actions: [
+          // Botón en la AppBar para ir a la pantalla del listado histórico
+          IconButton(
+            icon: const Icon(Icons.list),
+            tooltip: 'Ver Historial',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PantallaListaReportes(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -35,7 +51,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
             ),
             const SizedBox(height: 10),
 
-            // Desplegable de playas usando tu lista 'playasMalaga'
+            // Desplegable de playas
             DropdownButtonFormField<String>(
               value: playaIdSeleccionada,
               hint: const Text('Elige una playa'),
@@ -60,7 +76,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
             ),
             const SizedBox(height: 10),
 
-            // Opciones de medusas con chips
+            // Opciones de medusas con ChoiceChip
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: opcionesMedusas.map((opcion) {
@@ -77,24 +93,34 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
             ),
             const Spacer(),
 
-            // Botón de guardar con Hive
+            // Botón de guardar reporte
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: playaIdSeleccionada == null
                     ? null
                     : () async {
-                        // Guardar en la caja de Hive que abrimos en el main
                         var box = Hive.box('configuracionBox');
-                        await box.put(
-                          'playa_seleccionada_id',
-                          playaIdSeleccionada,
-                        );
-                        await box.put('nivel_medusas', nivelMedusas);
+
+                        final ahora = DateTime.now();
+                        // Clave única basada en fecha, hora y minuto
+                        final String claveUnica = 
+                            'reporte_${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}_${ahora.hour.toString().padLeft(2, '0')}-${ahora.minute.toString().padLeft(2, '0')}';
+
+                        // Mapa con los datos estructurados
+                        final Map<String, String> reporteData = {
+                          'playa': playaIdSeleccionada!,
+                          'nivel_medusas': nivelMedusas,
+                          'fecha_hora': '${ahora.day}/${ahora.month}/${ahora.year} - ${ahora.hour}:${ahora.minute.toString().padLeft(2, '0')}',
+                        };
+
+                        // Guardamos codificado en JSON para que sea compatible y legible en Hive Web
+                        await box.put(claveUnica, jsonEncode(reporteData));
 
                         final playaObj = playasMalaga.firstWhere(
                           (p) => p.id == playaIdSeleccionada,
@@ -107,10 +133,12 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
                                 'Guardado: ${playaObj.nombre} ($nivelMedusas)',
                               ),
                               backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior
-                                  .floating, // <-- Esto lo despega del fondo y lo sube
-                              margin: const EdgeInsets.only(left: 16,right: 16,bottom: 80
-                              ), // <-- Margen para que flote elegante
+                              behavior: SnackBarBehavior.floating,
+                              margin: const EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                bottom: 80,
+                              ),
                               duration: const Duration(seconds: 3),
                             ),
                           );
