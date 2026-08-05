@@ -12,86 +12,120 @@ class PantallaListaReportes extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: box.listenable(),
       builder: (context, Box box, _) {
+        final ahora = DateTime.now();
+
+        // Filtrar y eliminar automáticamente los reportes con más de 1 hora de antigüedad
         final keys = box.keys
+            .where((key) => key.toString().startsWith('reporte_'))
+            .toList();
+
+        for (var key in keys) {
+          final rawData = box.get(key);
+          if (rawData != null) {
+            try {
+              final data = jsonDecode(rawData);
+              final fechaHoraStr =
+                  data['fecha_hora']; // Formato: 'd/M/yyyy - HH:mm'
+
+              if (fechaHoraStr != null) {
+                final partes = fechaHoraStr.split(' - ');
+                final fechaPartes = partes[0].split('/');
+                final horaPartes = partes[1].split(':');
+
+                final int dia = int.parse(fechaPartes[0]);
+                final int mes = int.parse(fechaPartes[1]);
+                final int anio = int.parse(fechaPartes[2]);
+                final int hora = int.parse(horaPartes[0]);
+                final int minuto = int.parse(horaPartes[1]);
+
+                final fechaReporte = DateTime(anio, mes, dia, hora, minuto);
+
+                // Si ha pasado 1 hora o más, se borra de Hive
+                if (ahora.difference(fechaReporte).inHours >= 1) {
+                  box.delete(key);
+                }
+
+                // Si ha pasado 1 día o más, se borra de Hive
+                //if (ahora.difference(fechaReporte).inDays >= 1) {
+                //  box.delete(key);
+                // }
+              }
+            } catch (_) {
+              // Si falla el parseo de alguna clave antigua, se ignora o limpia
+            }
+          }
+        }
+
+        // Volver a obtener las keys actualizadas después de la limpieza
+        final keysValidas = box.keys
             .where((key) => key.toString().startsWith('reporte_'))
             .toList();
 
         return Scaffold(
           appBar: AppBar(
-            // Mostramos dinámicamente el número de anotaciones aquí
-            title: Text('Historial de Reportes (${keys.length})'),
+            title: Text('Historial de Reportes (${keysValidas.length})'),
             backgroundColor: Colors.blueAccent,
             foregroundColor: Colors.white,
           ),
-          body: keys.isEmpty
+          body: keysValidas.isEmpty
               ? const Center(
                   child: Text(
-                    'No hay reportes guardados todavía.',
+                    'No hay reportes recientes (se eliminan tras 1 hora).',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 )
               : ListView.builder(
-                  itemCount: keys.length,
+                  itemCount: keysValidas.length,
+                  padding: const EdgeInsets.all(12),
                   itemBuilder: (context, index) {
-                    final key = keys[index];
+                    final key = keysValidas[index];
                     final rawData = box.get(key);
-                    
-                    Map<String, dynamic> datos = {};
+                    if (rawData == null) return const SizedBox.shrink();
 
-                    if (rawData is String) {
-                      datos = Map<String, dynamic>.from(jsonDecode(rawData));
-                    } else if (rawData is Map) {
-                      datos = Map<String, dynamic>.from(rawData);
-                    }
+                    final Map<String, dynamic> data = jsonDecode(rawData);
+                    final String playa = data['playa'] ?? '';
+                    final String nivel = data['nivel_medusas'] ?? 'Ninguna';
+                    final String fechaHora = data['fecha_hora'] ?? '';
 
-                    final nivel = datos['nivel_medusas']?.toString() ?? '';
-
-                    Color cardBackgroundColor;
-                    Color iconColor;
-
-                    if (nivel == 'Bastantes' || nivel == 'Muchas') {
-                      cardBackgroundColor = Colors.red.shade300;
-                      iconColor = Colors.black;
-                    } else if (nivel == 'Moderadas' || nivel == 'Pocas') {
-                      cardBackgroundColor = Colors.orange.shade200;
-                      iconColor = Colors.black;
+                    Color colorFondo;
+                    if (nivel == 'Bastantes') {
+                      colorFondo = Colors.red[300]!;
+                    } else if (nivel == 'Pocas') {
+                      colorFondo = Colors.orange[300]!;
                     } else {
-                      cardBackgroundColor = Colors.green.shade200;
-                      iconColor = Colors.black;
+                      colorFondo = Colors.green[300]!;
                     }
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      elevation: 3,
-                      color: cardBackgroundColor,
+                      color: colorFondo,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
                       child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: iconColor.withValues(alpha: 0.2),
-                          child: Icon(Icons.beach_access, color: iconColor),
-                        ),
-                        title: Text(
-                          'Playa ID: ${datos['playa'] ?? 'Desconocida'}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black, // Letras en negro
+                        leading: const CircleAvatar(
+                          backgroundColor: Colors.black26,
+                          child: Icon(
+                            Icons.beach_access,
+                            color: Colors.black87,
                           ),
                         ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(
-                            'Nivel de medusas: $nivel',
-                            style: const TextStyle(
-                              color: Colors.black, // Letras en negro
-                              fontWeight: FontWeight.bold,
-                            ),
+                        title: Text(
+                          'Playa ID: $playa',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Nivel de medusas: $nivel',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         trailing: Text(
-                          datos['fecha_hora']?.toString() ?? '',
+                          fechaHora,
                           style: const TextStyle(
-                            fontSize: 17, 
-                            color: Colors.black, // Letras en negro
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
