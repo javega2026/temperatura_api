@@ -100,11 +100,15 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
             ),
             const SizedBox(height: 12),
             
-            // --- BOTÓN DE PRUEBA AÑADIDO ---
+         
+
+
+
+
 
 
             
-        // --- BOTÓN DE PRUEBA GUARDAR EN FIREBASE ---
+        // ------------------------------ BOTÓN DE PRUEBA GUARDAR EN FIREBASE ------------------------------
           SizedBox(
             width: double.infinity,
             height: 45,
@@ -117,7 +121,7 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                 ),
               ),
               icon: const Icon(Icons.cloud_upload),
-              label: const Text('Guardar Prueba en Firebase', style: TextStyle(fontSize: 14)),
+              label: const Text('Guardar Prueba en Firebase', style: TextStyle(fontSize: 15)),
               onPressed: () async {
                 final datosPrueba = {
                   'temperatura': '22°C',
@@ -148,6 +152,13 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
               },
             ),
           ),
+           
+           
+           
+           
+           
+           
+           
             // -------------------------------
 
             if (_mensajeError != null) ...[

@@ -27,5 +27,6 @@ samples, guidance on mobile development, and a full API reference.
 
 
 ## https://console.firebase.google.com/project/bdmedusas/overview
+## https://console.firebase.google.com/project/bdmedusas/firestore/databases/-default-/data/~2Fpruebas~2Fde3UkU6arSh1zyuXg727
 
 ## flutter run -d chrome

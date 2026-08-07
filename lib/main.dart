@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importante para carga
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:meteoflutter/screens/burcar_pantalla.dart';
 import 'firebase_options.dart';
+// import 'package:meteoflutter/pantalla_pruebas/pantalla_pruebas.dart';
 
 void main() async {
   // 1. Asegurar la inicialización de los enlaces de Flutter
@@ -36,8 +37,9 @@ class MiAplicacion extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      //home: const TemperaturaPantalla(),
+      
       home: const BuscarPantalla(),
+     // home: PantallaPruebas(),
     );
   }
 }//
