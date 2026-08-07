@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:meteoflutter/servicios/clima_servicio1.dart';
-import 'package:meteoflutter/screens/temperatura_pantalla_dinamica.dart'; // Importa tu otra pantalla
+import 'package:meteoflutter/screens/temperatura_pantalla_dinamica.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class BuscarPantalla extends StatefulWidget {
   const BuscarPantalla({super.key});
@@ -31,11 +34,8 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
     });
 
     if (resultado != null) {
-    // Comprobamos si el widget sigue activo tras la operación asíncrona
       if (!mounted) return;
     
-    
-      // Navegamos a la segunda pantalla pasando el objeto con los datos y las coordenadas
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -98,6 +98,58 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                     : const Text('Consultar Clima', style: TextStyle(fontSize: 16)),
               ),
             ),
+            const SizedBox(height: 12),
+            
+            // --- BOTÓN DE PRUEBA AÑADIDO ---
+
+
+            
+        // --- BOTÓN DE PRUEBA GUARDAR EN FIREBASE ---
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green[800],
+                side: BorderSide(color: Colors.green.shade300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Guardar Prueba en Firebase', style: TextStyle(fontSize: 14)),
+              onPressed: () async {
+                final datosPrueba = {
+                  'temperatura': '22°C',
+                  'humedad': '60%',
+                  'fecha': DateTime.now().toString(),
+                };
+
+                try {
+                  // Esto envía los datos directamente a la nube de Firebase
+                  await FirebaseFirestore.instance.collection('pruebas').add(datosPrueba);
+
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('¡Datos guardados en Firebase con éxito!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al guardar: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+            // -------------------------------
+
             if (_mensajeError != null) ...[
               const SizedBox(height: 20),
               Text(
@@ -112,3 +164,7 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
     );
   }
 }
+
+
+
+// debugPrint('--- RESULTADO DE PRUEBA ---');

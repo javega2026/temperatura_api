@@ -1,7 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importante para cargar el .env
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:meteoflutter/screens/burcar_pantalla.dart';
+import 'firebase_options.dart';
 
 void main() async {
   // 1. Asegurar la inicialización de los enlaces de Flutter
@@ -15,6 +17,10 @@ void main() async {
 
   // 4. Abrir la caja donde guardaremos nuestros datos
   await Hive.openBox('configuracionBox');
+
+  await Firebase.initializeApp( 
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const MiAplicacion());
 }
