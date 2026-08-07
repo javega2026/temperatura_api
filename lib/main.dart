@@ -34,6 +34,6 @@ class MiAplicacion extends StatelessWidget {
       home: const BuscarPantalla(),
     );
   }
-}
+}//
 
 
