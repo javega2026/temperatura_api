@@ -18,13 +18,14 @@ samples, guidance on mobile development, and a full API reference.
 
 
 
-//https://api.openweathermap.org/data/2.5/weather?q=Malaga,es&units=metric&appid=ce8b44e192207db912650d732dacde59
+## https://api.openweathermap.org/data/2.5/weather?q=Malaga,es&units=metric&appid=ce8b44e192207db912650d732dacde59
 
 
 
-//https://open-meteo.com/
-//https://api.open-meteo.com/v1/forecast?latitude=36.7202&longitude=-4.4203&daily=temperature_2m_max,temperature_2m_min&past_days=7&timezone=Europe/Berlin
+## https://open-meteo.com/
+## https://api.open-meteo.com/v1/forecast?latitude=36.7202&longitude=-4.4203&daily=temperature_2m_max,temperature_2m_min&past_days=7&timezone=Europe/Berlin
 
 
-// https://console.firebase.google.com/project/bdmedusas/overview
+## https://console.firebase.google.com/project/bdmedusas/overview
 
+## flutter run -d chrome
