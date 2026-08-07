@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/playa_modelo.dart';
 import 'pantalla_lista_reportes.dart';
+import 'pantalla_ia.dart'; // <-- Añadimos la importación de la pantalla de IA
 
 class PantallaMedusas extends StatefulWidget {
   const PantallaMedusas({super.key});
@@ -34,6 +35,21 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
             backgroundColor: Colors.blueAccent,
             foregroundColor: Colors.white,
             actions: [
+              // --- NUEVO BOTÓN DE LA IA ---
+              IconButton(
+                icon: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
+                tooltip: 'Análisis de medusas con IA',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PantallaIa(),
+                    ),
+                  );
+                },
+              ),
+              // -----------------------------
+              
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: TextButton.icon(
