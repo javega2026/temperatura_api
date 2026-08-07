@@ -24,3 +24,7 @@ samples, guidance on mobile development, and a full API reference.
 
 //https://open-meteo.com/
 //https://api.open-meteo.com/v1/forecast?latitude=36.7202&longitude=-4.4203&daily=temperature_2m_max,temperature_2m_min&past_days=7&timezone=Europe/Berlin
+
+
+// https://console.firebase.google.com/project/bdmedusas/overview
+
