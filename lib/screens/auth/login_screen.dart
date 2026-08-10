@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:meteoflutter/screens/auth/usuari_registrado_ok.dart';
+import 'registro_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,19 +33,23 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _cargando = true);
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+  email: _emailController.text.trim(),
+  password: _passwordController.text.trim(),
+);
 
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Inicio de sesión exitoso!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+if (!context.mounted) return;
+
+// Navegamos a la nueva pantalla de éxito y borramos el historial de login
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (context) => const UsuarioRegistradoOk(),
+  ),
+);
+
+
+
     } on FirebaseAuthException catch (e) {
       String mensajeError = 'Ocurrió un error al iniciar sesión';
       if (e.code == 'user-not-found') {
@@ -52,9 +58,11 @@ class _LoginScreenState extends State<LoginScreen> {
         mensajeError = 'Contraseña incorrecta.';
       } else if (e.code == 'invalid-email') {
         mensajeError = 'El formato del correo es inválido.';
+      } else if (e.code == 'invalid-credential') {
+        mensajeError = 'Credenciales incorrectas o usuario no encontrado.';
       }
 
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensajeError), backgroundColor: Colors.red),
       );
@@ -117,6 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 30),
+              
+              // Botón principal de Iniciar Sesión
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -135,6 +145,33 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Iniciar Sesión',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+
+              // Botón secundario para ir a la pantalla de Registro
+              SizedBox(
+                width: double.infinity,
+                height: 45,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.indigo[800],
+                    side: BorderSide(color: Colors.indigo.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Registrarse', style: TextStyle(fontSize: 15)),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegistroScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

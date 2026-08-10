@@ -13,7 +13,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _nombreController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  String _rolSeleccionado = 'usuario';
+
+  // Definimos el valor inicial exactamente igual que en el DropdownMenuItem
+  String _rolSeleccionado = 'Usuario';
   bool _cargando = false;
 
   @override
@@ -37,41 +39,42 @@ class _RegistroScreenState extends State<RegistroScreen> {
     setState(() => _cargando = true);
 
     try {
-      // 1. Crear usuario en Firebase Auth
-      UserCredential credencial = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      UserCredential credencial = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
-      // 2. Guardar datos adicionales en Cloud Firestore
-      await FirebaseFirestore.instance.collection('usuarios').doc(credencial.user!.uid).set({
-        'nombre': _nombreController.text.trim(),
-        'email': _emailController.text.trim(),
-        'rol': _rolSeleccionado,
-        'fechaRegistro': DateTime.now().toString(),
-      });
+      await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(credencial.user!.uid)
+          .set({
+            'nombre': _nombreController.text.trim(),
+            'email': _emailController.text.trim(),
+            'rol': _rolSeleccionado,
+            'fechaRegistro': DateTime.now().toString(),
+          });
 
       if (!context.mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('¡Cuenta creada con éxito!'),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context); // Vuelve a la pantalla anterior
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      String mensajeError = 'No se pudo registrar el usuario';
-      if (e.code == 'weak-password') {
-        mensajeError = 'La contraseña es demasiado débil (mínimo 6 caracteres).';
-      } else if (e.code == 'email-already-in-use') {
-        mensajeError = 'Ya existe una cuenta registrada con este correo.';
-      } else if (e.code == 'invalid-email') {
-        mensajeError = 'El formato del correo electrónico no es válido.';
-      }
+      String mensajeError = 'Error Firebase (${e.code}): ${e.message}';
 
       if (!context.mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensajeError), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(mensajeError),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 6),
+        ),
       );
     } finally {
       if (mounted) setState(() => _cargando = false);
@@ -92,22 +95,45 @@ class _RegistroScreenState extends State<RegistroScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.person_add_rounded, size: 80, color: Colors.purple),
-              const SizedBox(height: 20),
+              const Icon(
+                Icons.person_add_rounded,
+                size: 70,
+                color: Colors.purple,
+              ),
+              const SizedBox(height: 10),
               const Text(
                 'Crea una nueva cuenta',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.purple,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Rellena los datos para comenzar',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(height: 25),
+
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.amber.shade800,
+                  side: BorderSide(color: Colors.amber.shade400),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.flash_on),
+                label: const Text('Rellenar datos de prueba rápido'),
+                onPressed: () {
+                  setState(() {
+                    _nombreController.text = 'Usuario Prueba';
+                    _emailController.text =
+                        'test_${DateTime.now().millisecondsSinceEpoch}@test.com';
+                    _passwordController.text = '12345678';
+                    _rolSeleccionado =
+                        'Usuario'; // Aseguramos que coincida al autorrellenar
+                  });
+                },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+
               TextField(
                 controller: _nombreController,
                 decoration: InputDecoration(
@@ -143,8 +169,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _rolSeleccionado,
+
+              DropdownButtonFormField<String?>(
+                initialValue: _rolSeleccionado,
                 decoration: InputDecoration(
                   labelText: 'Rol de usuario',
                   border: OutlineInputBorder(
@@ -153,15 +180,24 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   prefixIcon: const Icon(Icons.badge_outlined),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'usuario', child: Text('Usuario')),
-                  DropdownMenuItem(value: 'admin', child: Text('Administrador')),
+                  DropdownMenuItem<String>(
+                    value: 'Usuario',
+                    child: Text('Usuario'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'Administrador',
+                    child: Text('Administrador'),
+                  ),
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    _rolSeleccionado = value!;
-                  });
+                onChanged: (String? nuevoValor) {
+                  if (nuevoValor != null) {
+                    setState(() {
+                      _rolSeleccionado = nuevoValor;
+                    });
+                  }
                 },
               ),
+
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -179,7 +215,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Registrarse',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
