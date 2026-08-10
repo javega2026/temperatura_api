@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:meteoflutter/screens/auth/login_screen.dart';
+import 'package:meteoflutter/screens/auth/registro_screen.dart';
 import 'package:meteoflutter/servicios/clima_servicio1.dart';
 import 'package:meteoflutter/screens/temperatura_pantalla_dinamica.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -143,7 +145,7 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
             ),
             const SizedBox(height: 12),
 
-            // ------------------------------ NUEVO: BOTÓN DE LOGIN EN BLANCO ------------------------------
+            // ------------------------------ BOTÓN DE LOGIN ------------------------------
             SizedBox(
               width: double.infinity,
               height: 45,
@@ -158,13 +160,18 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                 icon: const Icon(Icons.login),
                 label: const Text('Iniciar Sesión', style: TextStyle(fontSize: 15)),
                 onPressed: () {
-                  // TODO: Añadir lógica de login más adelante
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
                 },
               ),
             ),
             const SizedBox(height: 12),
 
-            // ------------------------------ NUEVO: BOTÓN DE REGISTRO EN BLANCO ------------------------------
+            // ------------------------------ BOTÓN DE REGISTRO ------------------------------
             SizedBox(
               width: double.infinity,
               height: 45,
@@ -179,11 +186,15 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                 icon: const Icon(Icons.person_add),
                 label: const Text('Registrarse', style: TextStyle(fontSize: 15)),
                 onPressed: () {
-                  // TODO: Añadir lógica de registro más adelante
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RegistroScreen(),
+                    ),
+                  );
                 },
               ),
             ),
-            // -------------------------------
 
             if (_mensajeError != null) ...[
               const SizedBox(height: 20),
