@@ -14,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _cargando = false;
+  bool _obscurePassword = true; // Empieza ocultando la contraseña
 
   @override
   void dispose() {
@@ -33,23 +34,18 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _cargando = true);
 
     try {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-  email: _emailController.text.trim(),
-  password: _passwordController.text.trim(),
-);
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-if (!context.mounted) return;
+      if (!mounted) return;
 
-// Navegamos a la nueva pantalla de éxito y borramos el historial de login
-Navigator.pushReplacement(
-  context,
-  MaterialPageRoute(
-    builder: (context) => const UsuarioRegistradoOk(),
-  ),
-);
-
-
-
+      // Navegamos a la nueva pantalla de éxito y borramos el historial de login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const UsuarioRegistradoOk()),
+      );
     } on FirebaseAuthException catch (e) {
       String mensajeError = 'Ocurrió un error al iniciar sesión';
       if (e.code == 'user-not-found') {
@@ -85,7 +81,11 @@ Navigator.pushReplacement(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_person_rounded, size: 80, color: Colors.indigo),
+              const Icon(
+                Icons.lock_person_rounded,
+                size: 80,
+                color: Colors.indigo,
+              ),
               const SizedBox(height: 20),
               const Text(
                 '¡Bienvenido de nuevo!',
@@ -113,19 +113,52 @@ Navigator.pushReplacement(
                 ),
               ),
               const SizedBox(height: 16),
+
               TextField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText:
+                    _obscurePassword, // Vinculamos la variable de estado
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   prefixIcon: const Icon(Icons.lock_outline),
+
+                  // Añadimos el botón del ojo al final (suffixIcon)
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword =
+                            !_obscurePassword; // Cambia el estado al pulsar
+                      });
+
+                      // Si acabamos de mostrar la contraseña (es decir, ahora es false),
+                      // programamos un temporizador de 3 segundos para volver a ocultarla
+                      if (!_obscurePassword) {
+                        Future.delayed(const Duration(milliseconds: 1500), () {
+                          // Nos aseguramos de que el widget siga activo antes de llamar a setState
+                          if (mounted && !_obscurePassword) {
+                            setState(() {
+                              _obscurePassword =
+                                  true; // Vuelve a ocultarse con puntos (****)
+                            });
+                          }
+                        });
+                      }
+                    },
+                  ),
                 ),
               ),
+
               const SizedBox(height: 30),
-              
+
               // Botón principal de Iniciar Sesión
               SizedBox(
                 width: double.infinity,
@@ -143,11 +176,14 @@ Navigator.pushReplacement(
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Iniciar Sesión',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
 
               // Botón secundario para ir a la pantalla de Registro
@@ -163,7 +199,10 @@ Navigator.pushReplacement(
                     ),
                   ),
                   icon: const Icon(Icons.person_add),
-                  label: const Text('Registrarse', style: TextStyle(fontSize: 15)),
+                  label: const Text(
+                    'Registrarse',
+                    style: TextStyle(fontSize: 15),
+                  ),
                   onPressed: () {
                     Navigator.push(
                       context,
