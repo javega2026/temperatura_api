@@ -3,6 +3,7 @@ import 'package:meteoflutter/screens/auth/login_screen.dart';
 import 'package:meteoflutter/servicios/clima_servicio1.dart';
 import 'package:meteoflutter/screens/temperatura_pantalla_dinamica.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class BuscarPantalla extends StatefulWidget {
   const BuscarPantalla({super.key});
@@ -16,6 +17,20 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
   final ClimaServicio1 _climaServicio = ClimaServicio1();
   bool _cargando = false;
   String? _mensajeError;
+
+  @override
+  void initState() {
+    super.initState();
+
+
+// Forzar parámetros de depuración para desarrollo local
+  FirebaseAnalytics.instance.setUserProperty(name: "debug_mode", value: "true");
+    // AQUÍ REGISTRAMOS EL ANALYTICS AL ABRIR LA PANTALLA
+    FirebaseAnalytics.instance.logEvent(
+      name: "pantalla_principal_abierta",
+      parameters: {"origen": "buscar_pantalla"},
+    );
+  }
 
   void _buscarClima() async {
     final ciudad = _controladorCiudad.text.trim();
@@ -34,7 +49,7 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
 
     if (resultado != null) {
       if (!mounted) return;
-    
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -63,11 +78,19 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.wb_sunny_rounded, size: 80, color: Colors.orangeAccent),
+              const Icon(
+                Icons.wb_sunny_rounded,
+                size: 80,
+                color: Colors.orangeAccent,
+              ),
               const SizedBox(height: 20),
               const Text(
                 '¿Qué tiempo hace hoy?',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                ),
               ),
               const SizedBox(height: 30),
               TextField(
@@ -96,11 +119,14 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                   onPressed: _cargando ? null : _buscarClima,
                   child: _cargando
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Consultar Clima', style: TextStyle(fontSize: 16)),
+                      : const Text(
+                          'Consultar Clima',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // ------------------------------ BOTÓN DE PRUEBA GUARDAR EN FIREBASE ------------------------------
               SizedBox(
                 width: double.infinity,
@@ -114,7 +140,10 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                     ),
                   ),
                   icon: const Icon(Icons.cloud_upload),
-                  label: const Text('Guardar Prueba en Firebase', style: TextStyle(fontSize: 15)),
+                  label: const Text(
+                    'Guardar Prueba en Firebase',
+                    style: TextStyle(fontSize: 15),
+                  ),
                   onPressed: () async {
                     final datosPrueba = {
                       'temperatura': '22°C',
@@ -123,12 +152,16 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                     };
 
                     try {
-                      await FirebaseFirestore.instance.collection('pruebas').add(datosPrueba);
+                      await FirebaseFirestore.instance
+                          .collection('pruebas')
+                          .add(datosPrueba);
 
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('¡Datos guardados en Firebase con éxito!'),
+                          content: Text(
+                            '¡Datos guardados en Firebase con éxito!',
+                          ),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -159,7 +192,10 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                     ),
                   ),
                   icon: const Icon(Icons.login),
-                  label: const Text('Iniciar Sesión', style: TextStyle(fontSize: 15)),
+                  label: const Text(
+                    'Iniciar Sesión',
+                    style: TextStyle(fontSize: 15),
+                  ),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -175,7 +211,11 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                 const SizedBox(height: 20),
                 Text(
                   _mensajeError!,
-                  style: const TextStyle(color: Colors.red, fontSize: 14, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

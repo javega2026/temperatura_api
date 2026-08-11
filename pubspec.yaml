@@ -27,7 +27,9 @@ dependencies:
   firebase_core: ^3.10.1   # Núcleo de inicialización para los servicios de Firebase
   cloud_firestore: ^5.6.2  # Base de datos en la nube NoSQL en tiempo real
   firebase_auth: ^5.4.1    # Sistema de autenticación de usuarios (Login y Registro)
+  firebase_analytics: ^11.0.0
 
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

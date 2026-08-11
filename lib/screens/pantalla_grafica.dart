@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:meteoflutter/models/clima_grafico_modelo.dart';
 import 'package:meteoflutter/servicios/clima_grafico_servicio.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class PantallaGrafica extends StatefulWidget {
   final double latitud;
@@ -27,6 +28,15 @@ class _PantallaGraficaState extends State<PantallaGrafica> {
   void initState() {
     super.initState();
     _futuroClimaGrafico = _servicio.obtenerDatosGrafica(widget.latitud, widget.longitud);
+ 
+ // 2. Añadimos el registro de Analytics aquí mismo
+    FirebaseAnalytics.instance.logEvent(
+      name: "pantalla_grafica_abierta",
+      parameters: {
+        "pantalla": "grafica",
+      },
+    );
+ 
   }
 
   @override
