@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importar flutter_dotenv
+import 'package:cloud_firestore/cloud_firestore.dart'; // 1. Importar Firestore
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:meteoflutter/screens/auth/usuari_registrado_ok.dart';
 import 'registro_screen.dart';
+// TODO: Importa aquí tu pantalla principal o buscador para los usuarios normales
+// import '../burcar_pantalla.dart'; 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _codigoController = TextEditingController(); // Controlador para el código
+  final _codigoController = TextEditingController();
   
   bool _cargando = false;
   bool _obscurePassword = true;
@@ -23,11 +26,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _codigoController.dispose(); // Limpiar el controlador del código
+    _codigoController.dispose();
     super.dispose();
   }
 
- void _iniciarSesion() async {
+  void _iniciarSesion() async {
     // 1. Validar que no haya campos vacíos
     if (_emailController.text.isEmpty || 
         _passwordController.text.isEmpty || 
@@ -68,18 +71,50 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _cargando = true);
 
     try {
-      // 4. Autenticación con Firebase si el código es correcto
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // 4. Autenticación con Firebase Auth
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      if (!mounted) return;
+      if (userCredential.user != null) {
+        // 5. Consultar el rol del usuario en Firestore usando su UID
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(userCredential.user!.uid)
+            .get();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UsuarioRegistradoOk()),
-      );
+        if (!mounted) return;
+
+        if (userDoc.exists) {
+          Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+          String rol = data['rol'] ?? 'Usuario';
+
+          // 6. Redirigir según el rol
+          if (rol.trim() == 'Administrador') {
+            // Si es Admin, va a la lista de usuarios para gestionar
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const UsuarioRegistradoOk()),
+            );
+          } else {
+            // Si es un Usuario normal, va a la pantalla principal (cambia BurcarPantalla por la tuya)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Scaffold(
+                body: Center(child: Text('Bienvenido Usuario Normal (Pantalla Principal)')),
+              )),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: No se encontró el perfil de este usuario en la base de datos.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     } on FirebaseAuthException catch (e) {
       String mensajeError = 'Ocurrió un error al iniciar sesión';
       if (e.code == 'user-not-found') {
@@ -187,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
-              // NUEVO: Campo de Código (conecta con .env)
+              // Campo de Código (conecta con .env)
               TextField(
                 controller: _codigoController,
                 keyboardType: TextInputType.number,

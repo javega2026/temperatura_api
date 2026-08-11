@@ -18,7 +18,58 @@ class _UsuarioRegistradoOkState extends State<UsuarioRegistradoOk> {
   @override
   void initState() {
     super.initState();
-    _cargarTodosLosUsuarios();
+    _verificarAdminYCargarUsuarios();
+  }
+
+  Future<void> _verificarAdminYCargarUsuarios() async {
+    try {
+      User? usuarioActual = FirebaseAuth.instance.currentUser;
+      
+      if (usuarioActual == null) {
+        if (!mounted) return;
+        Navigator.pop(context);
+        return;
+      }
+
+      // Verificamos el rol en Firestore antes de permitir ver la lista
+      DocumentSnapshot docUser = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(usuarioActual.uid)
+          .get();
+
+      if (docUser.exists) {
+        Map<String, dynamic> data = docUser.data() as Map<String, dynamic>;
+        String rol = data['rol'] ?? 'Usuario';
+
+        if (rol.trim() != 'Administrador') {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Acceso denegado: Se requieren permisos de administrador'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          Navigator.pop(context);
+          return;
+        }
+      } else {
+        if (!mounted) return;
+        Navigator.pop(context);
+        return;
+      }
+
+      // Si pasa la validación, cargamos los usuarios
+      await _cargarTodosLosUsuarios();
+
+    } catch (e) {
+      setState(() {
+        _cargandoDatos = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al verificar permisos: $e')),
+      );
+    }
   }
 
   Future<void> _cargarTodosLosUsuarios() async {
@@ -224,7 +275,6 @@ class _ActualizarUsuarioPantallaState extends State<ActualizarUsuarioPantalla> {
   late TextEditingController _nombreController;
   late TextEditingController _emailController;
   
-  // Opciones permitidas para bloquear texto libre
   static const List<String> _rolesPermitidos = ['Usuario', 'Administrador'];
   late String _rolSeleccionado;
 
@@ -236,7 +286,6 @@ class _ActualizarUsuarioPantallaState extends State<ActualizarUsuarioPantalla> {
     _nombreController = TextEditingController(text: widget.nombreActual);
     _emailController = TextEditingController(text: widget.emailActual);
     
-    // Validamos y limpiamos el rol inicial si viniera alterado de antes
     String rolLimpio = widget.rolActual.trim();
     if (_rolesPermitidos.contains(rolLimpio)) {
       _rolSeleccionado = rolLimpio;
@@ -261,7 +310,7 @@ class _ActualizarUsuarioPantallaState extends State<ActualizarUsuarioPantalla> {
           .update({
         'nombre': _nombreController.text.trim(),
         'email': _emailController.text.trim(),
-        'rol': _rolSeleccionado, // Guardamos la opción limpia del desplegable
+        'rol': _rolSeleccionado,
       });
       if (!mounted) return;
       Navigator.pop(context);
@@ -296,7 +345,6 @@ class _ActualizarUsuarioPantallaState extends State<ActualizarUsuarioPantalla> {
             ),
             const SizedBox(height: 12),
             
-            // COMBOBOX ESTRICTO
             DropdownButtonFormField<String>(
               value: _rolSeleccionado,
               decoration: const InputDecoration(labelText: 'Rol'),
