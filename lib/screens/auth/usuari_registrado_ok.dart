@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/usuario_modelo.dart'; 
+import '../../models/usuario_modelo.dart';
 
 class UsuarioRegistradoOk extends StatefulWidget {
   const UsuarioRegistradoOk({super.key});
@@ -11,165 +11,77 @@ class UsuarioRegistradoOk extends StatefulWidget {
 }
 
 class _UsuarioRegistradoOkState extends State<UsuarioRegistradoOk> {
-  bool _cargandoDatos = true;
-  List<UsuarioModelo> _listaUsuarios = [];
-  List<String> _listaIdsDocumentos = [];
+  bool _cargando = true;
+  List<MapEntry<String, UsuarioModelo>> _usuarios = [];
 
   @override
   void initState() {
     super.initState();
-    _verificarAdminYCargarUsuarios();
+    _initAdminYCargar();
   }
 
-  Future<void> _verificarAdminYCargarUsuarios() async {
+  Future<void> _initAdminYCargar() async {
     try {
-      User? usuarioActual = FirebaseAuth.instance.currentUser;
-      
-      if (usuarioActual == null) {
-        if (!mounted) return;
-        Navigator.pop(context);
-        return;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return _salir();
+
+      final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
+      if (!doc.exists || (doc.data()?['rol'] ?? '').toString().trim() != 'Administrador') {
+        _mostrarError('Acceso denegado: Se requieren permisos de administrador');
+        return _salir();
       }
-
-      // Verificamos el rol en Firestore antes de permitir ver la lista
-      DocumentSnapshot docUser = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(usuarioActual.uid)
-          .get();
-
-      if (docUser.exists) {
-        Map<String, dynamic> data = docUser.data() as Map<String, dynamic>;
-        String rol = data['rol'] ?? 'Usuario';
-
-        if (rol.trim() != 'Administrador') {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Acceso denegado: Se requieren permisos de administrador'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          Navigator.pop(context);
-          return;
-        }
-      } else {
-        if (!mounted) return;
-        Navigator.pop(context);
-        return;
-      }
-
-      // Si pasa la validación, cargamos los usuarios
-      await _cargarTodosLosUsuarios();
-
+      await _cargarUsuarios();
     } catch (e) {
-      setState(() {
-        _cargandoDatos = false;
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al verificar permisos: $e')),
-      );
+      _mostrarError('Error: $e');
+      setState(() => _cargando = false);
     }
   }
 
-  Future<void> _cargarTodosLosUsuarios() async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .get();
-
-      final List<UsuarioModelo> usuariosTemp = [];
-      final List<String> idsTemp = [];
-
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data();
-        usuariosTemp.add(UsuarioModelo.fromMap(data, doc.id)); 
-        idsTemp.add(doc.id);
-      }
-
-      setState(() {
-        _listaUsuarios = usuariosTemp;
-        _listaIdsDocumentos = idsTemp;
-        _cargandoDatos = false;
-      });
-    } catch (e) {
-      setState(() {
-        _cargandoDatos = false;
-      });
-    }
+  Future<void> _cargarUsuarios() async {
+    final snap = await FirebaseFirestore.instance.collection('usuarios').get();
+    setState(() {
+      _usuarios = snap.docs.map((d) => MapEntry(d.id, UsuarioModelo.fromMap(d.data(), d.id))).toList();
+      _cargando = false;
+    });
   }
 
-  Future<void> _borrarUsuario(String idDoc) async {
-    try {
-      await FirebaseFirestore.instance.collection('usuarios').doc(idDoc).delete();
-      _cargarTodosLosUsuarios();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario borrado correctamente')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al borrar: $e')),
-      );
-    }
+  Future<void> _borrar(String id) async {
+    await FirebaseFirestore.instance.collection('usuarios').doc(id).delete();
+    _cargarUsuarios();
+    _mostrarError('Usuario borrado correctamente');
+  }
+
+  void _salir() {
+    if (mounted) Navigator.pop(context);
+  }
+
+  void _mostrarError(String msg) {
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lista de Usuarios en BD'),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
-      ),
-      body: _cargandoDatos
+      appBar: AppBar(title: const Text('Gestión de Usuarios'), backgroundColor: Colors.green[700], foregroundColor: Colors.white),
+      body: _cargando
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  const Text(
-                    'Registros encontrados en Firestore:',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   Expanded(
-                    child: _listaUsuarios.isEmpty
-                        ? const Center(child: Text('No hay usuarios registrados.'))
+                    child: _usuarios.isEmpty
+                        ? const Center(child: Text('No hay usuarios.'))
                         : ListView.builder(
-                            itemCount: _listaUsuarios.length,
-                            itemBuilder: (context, index) {
-                              final usuario = _listaUsuarios[index];
-                              final idFirestore = _listaIdsDocumentos[index];
-
+                            itemCount: _usuarios.length,
+                            itemBuilder: (context, i) {
+                              final id = _usuarios[i].key;
+                              final u = _usuarios[i].value;
                               return Card(
-                                elevation: 3,
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
                                 child: ListTile(
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Colors.green,
-                                    child: Icon(Icons.person, color: Colors.white),
-                                  ),
-                                  title: Text(
-                                    usuario.nombre,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 4),
-                                      Text('Email: ${usuario.email}'),
-                                      Text('Rol: ${usuario.rol}'),
-                                    ],
-                                  ),
+                                  leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.person, color: Colors.white)),
+                                  title: Text(u.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Email: ${u.email}\nRol: ${u.rol}'),
                                   isThreeLine: true,
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -177,44 +89,25 @@ class _UsuarioRegistradoOkState extends State<UsuarioRegistradoOk> {
                                       IconButton(
                                         icon: const Icon(Icons.edit, color: Colors.blue),
                                         onPressed: () async {
-                                          await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ActualizarUsuarioPantalla(
-                                                usuarioId: idFirestore,
-                                                nombreActual: usuario.nombre,
-                                                emailActual: usuario.email,
-                                                rolActual: usuario.rol,
-                                              ),
-                                            ),
-                                          );
-                                          _cargarTodosLosUsuarios();
+                                          await Navigator.push(context, MaterialPageRoute(
+                                            builder: (_) => ActualizarUsuarioPantalla(id: id, nombre: u.nombre, email: u.email, rol: u.rol),
+                                          ));
+                                          _cargarUsuarios();
                                         },
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.delete, color: Colors.red),
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: const Text('Eliminar usuario'),
-                                              content: const Text('¿Estás seguro de que deseas borrar este usuario?'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context),
-                                                  child: const Text('Cancelar'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _borrarUsuario(idFirestore);
-                                                  },
-                                                  child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
+                                        onPressed: () => showDialog(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                            title: const Text('Eliminar'),
+                                            content: const Text('¿Estás seguro?'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                                              TextButton(onPressed: () { Navigator.pop(context); _borrar(id); }, child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -223,27 +116,14 @@ class _UsuarioRegistradoOkState extends State<UsuarioRegistradoOk> {
                             },
                           ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[700],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () async {
-                        await FirebaseAuth.instance.signOut();
-                        if (!context.mounted) return;
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Cerrar Sesión',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red[700], foregroundColor: Colors.white),
+                      onPressed: () async { await FirebaseAuth.instance.signOut(); _salir(); },
+                      child: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -254,128 +134,77 @@ class _UsuarioRegistradoOkState extends State<UsuarioRegistradoOk> {
 }
 
 class ActualizarUsuarioPantalla extends StatefulWidget {
-  final String usuarioId;
-  final String nombreActual;
-  final String emailActual;
-  final String rolActual;
+  final String id;
+  final String nombre;
+  final String email;
+  final String rol;
 
   const ActualizarUsuarioPantalla({
     super.key,
-    required this.usuarioId,
-    required this.nombreActual,
-    required this.emailActual,
-    required this.rolActual,
+    required this.id,
+    required this.nombre,
+    required this.email,
+    required this.rol,
   });
 
   @override
-  State<ActualizarUsuarioPantalla> createState() => _ActualizarUsuarioPantallaState();
+  State<ActualizarUsuarioPantalla> createState() => _ActualizarUsuarioState();
 }
 
-class _ActualizarUsuarioPantallaState extends State<ActualizarUsuarioPantalla> {
-  late TextEditingController _nombreController;
-  late TextEditingController _emailController;
-  
-  static const List<String> _rolesPermitidos = ['Usuario', 'Administrador'];
-  late String _rolSeleccionado;
-
+class _ActualizarUsuarioState extends State<ActualizarUsuarioPantalla> {
+  late final TextEditingController _nombre = TextEditingController(text: widget.nombre);
+  late final TextEditingController _email = TextEditingController(text: widget.email);
+  late String _rol = ['Usuario', 'Administrador'].contains(widget.rol.trim()) ? widget.rol.trim() : 'Usuario';
   bool _guardando = false;
 
   @override
-  void initState() {
-    super.initState();
-    _nombreController = TextEditingController(text: widget.nombreActual);
-    _emailController = TextEditingController(text: widget.emailActual);
-    
-    String rolLimpio = widget.rolActual.trim();
-    if (_rolesPermitidos.contains(rolLimpio)) {
-      _rolSeleccionado = rolLimpio;
-    } else {
-      _rolSeleccionado = 'Usuario';
-    }
+  void dispose() { 
+    _nombre.dispose(); 
+    _email.dispose(); 
+    super.dispose(); 
   }
 
-  @override
-  void dispose() {
-    _nombreController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _actualizarFirestore() async {
+  Future<void> _guardar() async {
     setState(() => _guardando = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(widget.usuarioId)
-          .update({
-        'nombre': _nombreController.text.trim(),
-        'email': _emailController.text.trim(),
-        'rol': _rolSeleccionado,
+      await FirebaseFirestore.instance.collection('usuarios').doc(widget.id).update({
+        'nombre': _nombre.text.trim(),
+        'email': _email.text.trim(),
+        'rol': _rol,
       });
-      if (!mounted) return;
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() => _guardando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al actualizar: $e')),
-      );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Actualizar Usuario'),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('Actualizar Usuario'), backgroundColor: Colors.green[700], foregroundColor: Colors.white),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: _nombreController,
-              decoration: const InputDecoration(labelText: 'Nombre'),
-            ),
+            TextField(controller: _nombre, decoration: const InputDecoration(labelText: 'Nombre')),
             const SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
+            TextField(controller: _email, decoration: const InputDecoration(labelText: 'Email')),
             const SizedBox(height: 12),
-            
             DropdownButtonFormField<String>(
-              value: _rolSeleccionado,
+              value: _rol,
               decoration: const InputDecoration(labelText: 'Rol'),
-              items: _rolesPermitidos.map((String rol) {
-                return DropdownMenuItem<String>(
-                  value: rol,
-                  child: Text(rol),
-                );
-              }).toList(),
-              onChanged: (String? nuevoRol) {
-                if (nuevoRol != null) {
-                  setState(() {
-                    _rolSeleccionado = nuevoRol;
-                  });
-                }
-              },
+              items: ['Usuario', 'Administrador'].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+              onChanged: (val) => setState(() => _rol = val ?? 'Usuario'),
             ),
-
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _guardando ? null : _actualizarFirestore,
-                child: _guardando
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Guardar Cambios', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], foregroundColor: Colors.white),
+                onPressed: _guardando ? null : _guardar,
+                child: _guardando ? const CircularProgressIndicator(color: Colors.white) : const Text('Guardar Cambios'),
               ),
             ),
           ],
