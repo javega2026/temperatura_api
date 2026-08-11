@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importar flutter_dotenv
 import 'package:meteoflutter/screens/auth/usuari_registrado_ok.dart';
 import 'registro_screen.dart';
 
@@ -13,20 +14,53 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _codigoController = TextEditingController(); // Controlador para el código
+  
   bool _cargando = false;
-  bool _obscurePassword = true; // Empieza ocultando la contraseña
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _codigoController.dispose(); // Limpiar el controlador del código
     super.dispose();
   }
 
-  void _iniciarSesion() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+ void _iniciarSesion() async {
+    // 1. Validar que no haya campos vacíos
+    if (_emailController.text.isEmpty || 
+        _passwordController.text.isEmpty || 
+        _codigoController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, rellena todos los campos')),
+        const SnackBar(
+          content: Text('Por favor, rellena todos los campos incluyendo el código'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // 2. Obtener el valor de la clave de forma segura
+    final String? claveEnv = dotenv.env['CLAVE_CODIGO'];
+
+    if (claveEnv == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: La variable CLAVE_CODIGO no está definida en el archivo .env'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 3. Validar que el código introducido coincida con el del .env
+    if (_codigoController.text.trim() != claveEnv.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El código introducido no es válido'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -34,6 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _cargando = true);
 
     try {
+      // 4. Autenticación con Firebase si el código es correcto
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -41,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      // Navegamos a la nueva pantalla de éxito y borramos el historial de login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const UsuarioRegistradoOk()),
@@ -101,6 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 35),
+              
+              // Campo de Correo
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -114,18 +150,16 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Campo de Contraseña
               TextField(
                 controller: _passwordController,
-                obscureText:
-                    _obscurePassword, // Vinculamos la variable de estado
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   prefixIcon: const Icon(Icons.lock_outline),
-
-                  // Añadimos el botón del ojo al final (suffixIcon)
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -135,25 +169,34 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     onPressed: () {
                       setState(() {
-                        _obscurePassword =
-                            !_obscurePassword; // Cambia el estado al pulsar
+                        _obscurePassword = !_obscurePassword;
                       });
 
-                      // Si acabamos de mostrar la contraseña (es decir, ahora es false),
-                      // programamos un temporizador de 3 segundos para volver a ocultarla
                       if (!_obscurePassword) {
                         Future.delayed(const Duration(milliseconds: 1500), () {
-                          // Nos aseguramos de que el widget siga activo antes de llamar a setState
                           if (mounted && !_obscurePassword) {
                             setState(() {
-                              _obscurePassword =
-                                  true; // Vuelve a ocultarse con puntos (****)
+                              _obscurePassword = true;
                             });
                           }
                         });
                       }
                     },
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // NUEVO: Campo de Código (conecta con .env)
+              TextField(
+                controller: _codigoController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Código de acceso',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: const Icon(Icons.pin),
                 ),
               ),
 

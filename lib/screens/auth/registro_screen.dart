@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -10,11 +11,12 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  final _nombreController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  // 1. Declaración correcta de TODOS los controladores (incluyendo el del código)
+  final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _codigoController = TextEditingController();
 
-  // Definimos el valor inicial exactamente igual que en el DropdownMenuItem
   String _rolSeleccionado = 'Usuario';
   bool _cargando = false;
 
@@ -23,15 +25,45 @@ class _RegistroScreenState extends State<RegistroScreen> {
     _nombreController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _codigoController.dispose();
     super.dispose();
   }
 
   void _registrarUsuario() async {
+    // 2. Validar que ningún campo esté vacío
     if (_nombreController.text.isEmpty ||
         _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+        _passwordController.text.isEmpty ||
+        _codigoController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, rellena todos los campos')),
+        const SnackBar(
+          content: Text('Por favor, rellena todos los campos incluyendo el código'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // 3. Comprobar la variable de entorno CLAVE_CODIGO
+    final String? claveEnv = dotenv.env['CLAVE_CODIGO'];
+
+    if (claveEnv == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: La variable CLAVE_CODIGO no está definida en el archivo .env'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 4. Validar que el código introducido coincida con el del .env
+    if (_codigoController.text.trim() != claveEnv.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El código de registro introducido no es válido'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -55,7 +87,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
             'fechaRegistro': DateTime.now().toString(),
           });
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -67,7 +99,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     } on FirebaseAuthException catch (e) {
       String mensajeError = 'Error Firebase (${e.code}): ${e.message}';
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -127,8 +159,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     _emailController.text =
                         'test_${DateTime.now().millisecondsSinceEpoch}@test.com';
                     _passwordController.text = '12345678';
-                    _rolSeleccionado =
-                        'Usuario'; // Aseguramos que coincida al autorrellenar
+                    _codigoController.text = '1234'; // Rellena con el valor de prueba del .env
+                    _rolSeleccionado = 'Usuario';
                   });
                 },
               ),
@@ -166,6 +198,20 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   prefixIcon: const Icon(Icons.lock_outline),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Campo para el Código de Registro validado con el .env
+              TextField(
+                controller: _codigoController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Código de Registro (.env)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: const Icon(Icons.vpn_key_outlined),
                 ),
               ),
               const SizedBox(height: 16),
