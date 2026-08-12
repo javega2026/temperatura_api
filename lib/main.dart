@@ -2,7 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importante para cargar el .env
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:meteoflutter/screens/burcar_pantalla.dart';
+import 'package:meteoflutter/screens/pantalla_pruebas._google_map.dart';
+//import 'package:meteoflutter/screens/burcar_pantalla.dart';
 import 'firebase_conexion.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 //import 'package:meteoflutter/screens/pantalla_pruebas/pantalla_pruebas.dart';
@@ -45,13 +46,18 @@ class MiAplicacion extends StatelessWidget {
 
       theme: ThemeData(primarySwatch: Colors.blue),
 
-      home: const BuscarPantalla(),
+     // home: const BuscarPantalla(),
       // home : const PantallaPruebas(),
       //home:const FormularioPantalla(),
       //home:  const ArchivoListar(),
      // home : const CrearMedusaPantalla(),
+     home: PantallaPruebasGoogleMap(),
     );
   }
 }//
 
 
+//1. Falta de la clave de API (Google Maps API Key)
+//Google Maps no muestra los azulejos del mapa si no 
+//hay una clave de API válida configurada para la 
+//plataforma que estás usando.

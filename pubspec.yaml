@@ -28,6 +28,7 @@ dependencies:
   cloud_firestore: ^5.6.2  # Base de datos en la nube NoSQL en tiempo real
   firebase_auth: ^5.4.1    # Sistema de autenticación de usuarios (Login y Registro)
   firebase_analytics: ^11.0.0
+  google_maps_flutter: ^2.5.0 # mostrar mapas con google maps
 
   
 dev_dependencies:
