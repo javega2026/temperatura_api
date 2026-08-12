@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // 1. Importar Firestore
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:meteoflutter/screens/auth/usuari_registrado_ok.dart';
 import 'registro_screen.dart';
-// TODO: Importa aquí tu pantalla principal o buscador para los usuarios normales
-// import '../burcar_pantalla.dart'; 
+import '../formulario_medusas_usuario/crear_medusa_pantalla.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,8 +16,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _codigoController = TextEditingController();
-  
+
   bool _cargando = false;
   bool _obscurePassword = true;
 
@@ -26,43 +24,19 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _codigoController.dispose();
+
     super.dispose();
   }
 
-  void _iniciarSesion() async {
+void _iniciarSesion() async {
     // 1. Validar que no haya campos vacíos
-    if (_emailController.text.isEmpty || 
-        _passwordController.text.isEmpty || 
-        _codigoController.text.isEmpty) {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor, rellena todos los campos incluyendo el código'),
+          content: Text(
+            'Por favor, rellena todos los campos',
+          ),
           backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    // 2. Obtener el valor de la clave de forma segura
-    final String? claveEnv = dotenv.env['CLAVE_CODIGO'];
-
-    if (claveEnv == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: La variable CLAVE_CODIGO no está definida en el archivo .env'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // 3. Validar que el código introducido coincida con el del .env
-    if (_codigoController.text.trim() != claveEnv.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('El código introducido no es válido'),
-          backgroundColor: Colors.red,
         ),
       );
       return;
@@ -72,10 +46,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // 4. Autenticación con Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       if (userCredential.user != null) {
         // 5. Consultar el rol del usuario en Firestore usando su UID
@@ -90,26 +65,30 @@ class _LoginScreenState extends State<LoginScreen> {
           Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
           String rol = data['rol'] ?? 'Usuario';
 
-          // 6. Redirigir según el rol
+          // 6. Redirigir según el rol correctamente acotado
           if (rol.trim() == 'Administrador') {
             // Si es Admin, va a la lista de usuarios para gestionar
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const UsuarioRegistradoOk()),
+              MaterialPageRoute(
+                builder: (context) => const UsuarioRegistradoOk(),
+              ),
             );
           } else {
-            // Si es un Usuario normal, va a la pantalla principal (cambia BurcarPantalla por la tuya)
+            // Si es un Usuario normal, va al formulario de inserción de medusas
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const Scaffold(
-                body: Center(child: Text('Bienvenido Usuario Normal (Pantalla Principal)')),
-              )),
+              MaterialPageRoute(
+                builder: (context) => const CrearMedusaPantalla(),
+              ),
             );
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Error: No se encontró el perfil de este usuario en la base de datos.'),
+              content: Text(
+                'Error: No se encontró el perfil de este usuario en la base de datos.',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -170,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 35),
-              
+
               // Campo de Correo
               TextField(
                 controller: _emailController,
@@ -220,22 +199,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 50),
 
-              // Campo de Código (conecta con .env)
-              TextField(
-                controller: _codigoController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Código de acceso',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.pin),
-                ),
-              ),
-
-              const SizedBox(height: 30),
+           
 
               // Botón principal de Iniciar Sesión
               SizedBox(
