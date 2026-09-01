@@ -11,13 +11,11 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  // 1. Declaración correcta de TODOS los controladores (incluyendo el del código)
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _codigoController = TextEditingController();
 
-  String _rolSeleccionado = 'Usuario';
   bool _cargando = false;
 
   @override
@@ -30,40 +28,48 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   void _registrarUsuario() async {
-    // 2. Validar que ningún campo esté vacío
+    // 1. Validar que ningún campo esté vacío
     if (_nombreController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _codigoController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, rellena todos los campos incluyendo el código'),
-          backgroundColor: Colors.orange,
-        ),
+      if (!mounted) return;
+      _mostrarAlerta(
+        'Campos incompletos', 
+        'Por favor, rellena todos los campos incluyendo el código.', 
+        Colors.orange
       );
       return;
     }
 
-    // 3. Comprobar la variable de entorno CLAVE_CODIGO
-    final String? claveEnv = dotenv.env['CLAVE_CODIGO'];
+    // 2. Obtener los códigos estrictamente desde el archivo .env (sin valores por defecto expuestos)
+    final String adminCode = dotenv.env['ADMIN_SECRET_CODE']?.trim() ?? '';
+    final String userCode = dotenv.env['USER_SECRET_CODE']?.trim() ?? '';
 
-    if (claveEnv == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: La variable CLAVE_CODIGO no está definida en el archivo .env'),
-          backgroundColor: Colors.red,
-        ),
+    if (adminCode.isEmpty || userCode.isEmpty) {
+      if (!mounted) return;
+      _mostrarAlerta(
+        'Error de Configuración', 
+        'No se pudieron cargar los códigos de seguridad desde el archivo .env.', 
+        Colors.red
       );
       return;
     }
 
-    // 4. Validar que el código introducido coincida con el del .env
-    if (_codigoController.text.trim() != claveEnv.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('El código de registro introducido no es válido'),
-          backgroundColor: Colors.red,
-        ),
+    // 3. Determinar el rol según el código introducido
+    final String codigoIngresado = _codigoController.text.trim();
+    String rolAsignado;
+
+    if (codigoIngresado == adminCode) {
+      rolAsignado = 'Administrador';
+    } else if (codigoIngresado == userCode) {
+      rolAsignado = 'Usuario';
+    } else {
+      if (!mounted) return;
+      _mostrarAlerta(
+        'Código Incorrecto', 
+        'El código de registro introducido no es válido.', 
+        Colors.red
       );
       return;
     }
@@ -83,34 +89,70 @@ class _RegistroScreenState extends State<RegistroScreen> {
           .set({
             'nombre': _nombreController.text.trim(),
             'email': _emailController.text.trim(),
-            'rol': _rolSeleccionado,
+            'rol': rolAsignado,
             'fechaRegistro': DateTime.now().toString(),
           });
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Cuenta creada con éxito!'),
-          backgroundColor: Colors.green,
-        ),
+      _mostrarAlerta(
+        '¡Éxito!', 
+        'Cuenta creada con éxito.', 
+        Colors.green, 
+        esExito: true
       );
-      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String mensajeError = 'Error Firebase (${e.code}): ${e.message}';
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(mensajeError),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 6),
-        ),
-      );
+      _mostrarAlerta('Error de Registro', mensajeError, Colors.red);
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  // Método para rellenar datos de prueba como Usuario (leyendo del .env de forma segura)
+  void _rellenarDatosUsuario() {
+    final String userCode = dotenv.env['USER_SECRET_CODE']?.trim() ?? '';
+    setState(() {
+      _nombreController.text = 'Sandra';
+      _emailController.text = 'test_${DateTime.now().millisecondsSinceEpoch}@test.com';
+      _passwordController.text = '123456';
+      _codigoController.text = userCode; // Carga el código desde el .env dinámicamente
+    });
+  }
+
+  // Método para rellenar datos de prueba como Administrador (leyendo del .env de forma segura)
+  void _rellenarDatosAdmin() {
+    final String adminCode = dotenv.env['ADMIN_SECRET_CODE']?.trim() ?? '';
+    setState(() {
+      _nombreController.text = 'Admin Prueba';
+      _emailController.text = 'admin_${DateTime.now().millisecondsSinceEpoch}@test.com';
+      _passwordController.text = '123456';
+      _codigoController.text = adminCode; // Carga el código desde el .env dinámicamente
+    });
+  }
+
+  // Método auxiliar para mostrar alertas visuales claras en Web y Móvil
+  void _mostrarAlerta(String titulo, String mensaje, Color color, {bool esExito = false}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(titulo, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+        content: Text(mensaje),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Cierra la alerta
+              if (esExito) {
+                Navigator.pop(context); // Si fue éxito, vuelve a la pantalla anterior
+              }
+            },
+            child: const Text('Aceptar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -143,6 +185,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
               ),
               const SizedBox(height: 25),
 
+              // Botón de prueba rápido para USUARIO (usa el método seguro)
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.amber.shade800,
@@ -152,17 +195,23 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.flash_on),
-                label: const Text('Rellenar datos de prueba rápido'),
-                onPressed: () {
-                  setState(() {
-                    _nombreController.text = 'Usuario Prueba';
-                    _emailController.text =
-                        'test_${DateTime.now().millisecondsSinceEpoch}@test.com';
-                    _passwordController.text = '12345678';
-                    _codigoController.text = '1234'; // Rellena con el valor de prueba del .env
-                    _rolSeleccionado = 'Usuario';
-                  });
-                },
+                label: const Text('Rellenar datos de Usuario'),
+                onPressed: _rellenarDatosUsuario,
+              ),
+              const SizedBox(height: 10),
+
+              // Botón de prueba rápido para ADMIN (usa el método seguro)
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.purple.shade700,
+                  side: BorderSide(color: Colors.purple.shade300),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.admin_panel_settings),
+                label: const Text('Rellenar datos de Admin'),
+                onPressed: _rellenarDatosAdmin,
               ),
               const SizedBox(height: 20),
 
@@ -202,49 +251,20 @@ class _RegistroScreenState extends State<RegistroScreen> {
               ),
               const SizedBox(height: 16),
               
-              // Campo para el Código de Registro validado con el .env
               TextField(
                 controller: _codigoController,
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Código de Registro (.env)',
+                  helperText: 'Introduce el código secreto correspondiente',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   prefixIcon: const Icon(Icons.vpn_key_outlined),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              DropdownButtonFormField<String?>(
-                initialValue: _rolSeleccionado,
-                decoration: InputDecoration(
-                  labelText: 'Rol de usuario',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.badge_outlined),
-                ),
-                items: const [
-                  DropdownMenuItem<String>(
-                    value: 'Usuario',
-                    child: Text('Usuario'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'Administrador',
-                    child: Text('Administrador'),
-                  ),
-                ],
-                onChanged: (String? nuevoValor) {
-                  if (nuevoValor != null) {
-                    setState(() {
-                      _rolSeleccionado = nuevoValor;
-                    });
-                  }
-                },
-              ),
-
               const SizedBox(height: 30),
+
               SizedBox(
                 width: double.infinity,
                 height: 50,

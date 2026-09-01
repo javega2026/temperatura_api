@@ -22,9 +22,17 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
   void initState() {
     super.initState();
 
+    // **************************
 
-// Forzar parámetros de depuración para desarrollo local
-  FirebaseAnalytics.instance.setUserProperty(name: "debug_mode", value: "true");
+    _controladorCiudad.text = 'Málaga';
+
+    // ***************************************************************
+
+    // Forzar parámetros de depuración para desarrollo local
+    FirebaseAnalytics.instance.setUserProperty(
+      name: "debug_mode",
+      value: "true",
+    );
     // AQUÍ REGISTRAMOS EL ANALYTICS AL ABRIR LA PANTALLA
     FirebaseAnalytics.instance.logEvent(
       name: "pantalla_principal_abierta",

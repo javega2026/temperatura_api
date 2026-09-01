@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class IaServicio {
@@ -6,14 +7,18 @@ class IaServicio {
 
   Future<String> obtenerAnalisisMedusas() async {
     try {
-      // Leemos la clave exclusivamente desde las variables de entorno
       final String? apiKey = dotenv.env['GROQ_API_KEY'];
 
       if (apiKey == null || apiKey.isEmpty) {
         return "Error de configuración: La clave GROQ_API_KEY no está definida en el archivo .env";
       }
+      
+      // Modelo exacto obtenido del Playground de tu cuenta
+      const String modeloActual = 'openai/gpt-oss-120b'; 
 
-      // Obtenemos la fecha y hora actual para incluirla en el prompt
+      debugPrint('--- DEPURACIÓN GROQ ---');
+      debugPrint('Modelo utilizado: $modeloActual');
+
       final String fechaHoraActual = DateTime.now().toString().split('.')[0];
 
       final prompt = "Proporciona una guía general y útil sobre la situación de las medusas en las costas de Málaga, "
@@ -23,7 +28,7 @@ class IaServicio {
       final response = await _dio.post(
         'https://api.groq.com/openai/v1/chat/completions',
         data: {
-          'model': 'llama-3.3-70b-versatile',
+          'model': modeloActual,
           'messages': [
             {'role': 'user', 'content': prompt}
           ],
@@ -44,6 +49,11 @@ class IaServicio {
       }
 
     } catch (e) {
+      debugPrint('Error capturado en Dio: $e');
+      if (e is DioException && e.response != null) {
+        debugPrint('--- DATOS DEL ERROR DEL SERVIDOR ---');
+        debugPrint('Data: ${e.response?.data}');
+      }
       return "Error al conectar con la IA de Groq: $e";
     }
   }
