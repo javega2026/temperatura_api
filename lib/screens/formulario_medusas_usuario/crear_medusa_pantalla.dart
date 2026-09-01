@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'lista_medusa_guardadas.dart';
 
 class CrearMedusaPantalla extends StatefulWidget {
@@ -65,6 +66,26 @@ class _CrearMedusaPantallaState extends State<CrearMedusaPantalla> {
     } finally {
       if (mounted) {
         setState(() => _guardando = false);
+      }
+    }
+  }
+
+  // Función para cerrar sesión y volver atrás
+  Future<void> _cerrarSesion() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      /**
+       * mounted significa literalmente "montado" (es una propiedad booleana que vale true 
+       * si el widget sigue activo en la pantalla y false si ya se ha destruido o cerrado).
+       */
+      if (mounted) {
+        Navigator.pop(context); // Vuelve a la pantalla anterior
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cerrar sesión: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -150,6 +171,8 @@ class _CrearMedusaPantallaState extends State<CrearMedusaPantalla> {
               maxLines: 3,
             ),
             const SizedBox(height: 24),
+            
+            // --- BOTÓN GUARDAR ---
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -168,6 +191,29 @@ class _CrearMedusaPantallaState extends State<CrearMedusaPantalla> {
                         'Guardar Medusa',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+
+            // --- BOTÓN CERRAR SESIÓN (ABAJO) ---
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: _cerrarSesion,
+                icon: const Icon(Icons.logout),
+                label: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
