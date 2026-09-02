@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meteoflutter/models/reporte_medusa_modelo.dart';
-import 'package:meteoflutter/widgets/usuario_guarda_medusa/_CardReporte.dart';
+import 'package:meteoflutter/widgets/usuario_guarda_medusa/_card_reporte.dart';
 
 class PantallaListaReportes extends StatefulWidget {
   const PantallaListaReportes({super.key});
