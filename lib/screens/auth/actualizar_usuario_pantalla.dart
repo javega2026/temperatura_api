@@ -103,7 +103,7 @@ class _ActualizarUsuarioPantallaState extends State<ActualizarUsuarioPantalla> {
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: DropdownButtonFormField<String>(
-                value: _rolSeleccionado,
+                initialValue: _rolSeleccionado,
                 decoration: const InputDecoration(labelText: 'Rol Estricto (Sin Texto Libre)'),
                 items: _rolesPermitidos.map((String rol) {
                   return DropdownMenuItem<String>(

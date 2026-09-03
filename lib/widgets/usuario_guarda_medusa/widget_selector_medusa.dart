@@ -42,7 +42,7 @@ class WidgetSelectorMedusa extends StatelessWidget {
             }
 
             return DropdownButtonFormField<String>(
-              value: medusaIdSeleccionada,
+              initialValue: medusaIdSeleccionada,
               hint: const Text('Elige una medusa'),
               isExpanded: true,
               selectedItemBuilder: (context) {

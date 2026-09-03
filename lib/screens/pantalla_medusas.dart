@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pantalla_lista_reportes.dart';
 import 'pantalla_ia.dart';
-import 'package:meteoflutter/models/playa_lon_lat_modelo.dart';
+import 'package:meteoflutter/models/playa_modelo1.dart'; 
 import 'package:meteoflutter/models/reporte_medusa_modelo.dart';
 import '/widgets/usuario_guarda_medusa/widget_selector_playa.dart';
 import '/widgets/usuario_guarda_medusa/widget_selector_medusa.dart';
@@ -17,6 +17,8 @@ class PantallaMedusas extends StatefulWidget {
 class _PantallaMedusasState extends State<PantallaMedusas> {
   String? playaIdSeleccionada;
   String? nombrePlayaSeleccionada;
+  double? latitudPlayaSeleccionada;  // 📍 Variable para la latitud
+  double? longitudPlayaSeleccionada; // 📍 Variable para la longitud
 
   String? medusaIdSeleccionada;
   String? nombreMedusaSeleccionada;
@@ -26,19 +28,24 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
   String nivelMedusas = '1 - 5';
   final List<String> opcionesMedusas = ['1 - 5', '6 - 15', 'Más de 15'];
 
-  // 🚀 Lógica de guardado separada en un método limpio
+  // 🚀 Lógica de guardado incluyendo latitud y longitud
   Future<void> _guardarReporte() async {
     final ahora = DateTime.now();
     final formatoFecha = '${ahora.day}/${ahora.month}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
+
+    // Obtenemos el objeto completo de la playa elegida en el modelo de Andalucía
+    final playaSeleccionadaObj = playasAndalucia.firstWhere((p) => p.id == playaIdSeleccionada);
 
     final nuevoReporte = ReporteMedusaModelo(
       nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
       nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
       imagen: imagenMedusaUrl ?? '',
       playa: nombrePlayaSeleccionada ?? 'Desconocida',
-      provincia: 'Málaga',
+      provincia: playaSeleccionadaObj.provincia,
       nivelMedusas: nivelMedusas,
       fechaHora: formatoFecha,
+      latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,   // 📍 Guardamos latitud
+      longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud, // 📍 Guardamos longitud
     );
 
     try {
@@ -46,10 +53,12 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
           .collection('reportes_medusas')
           .add(nuevoReporte.toMap());
 
-      // Limpiar formulario
+      // Limpiar formulario por completo
       setState(() {
         playaIdSeleccionada = null;
         nombrePlayaSeleccionada = null;
+        latitudPlayaSeleccionada = null;
+        longitudPlayaSeleccionada = null;
         medusaIdSeleccionada = null;
         nombreMedusaSeleccionada = null;
         nombreEspecificoMedusa = null;
@@ -60,7 +69,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('¡Reporte guardado en Firebase con éxito! 🌊'),
+            content: Text('¡Reporte con coordenadas guardado en Firebase con éxito! 🌊'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
@@ -108,17 +117,21 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Selector de Playa
+            // 1. Selector de Playa (Adaptado para recibir el objeto PlayaModelo desde el widget)
             WidgetSelectorPlaya(
               playaIdSeleccionada: playaIdSeleccionada,
-              onPlayaSelected: (value) {
+              onPlayaSelected: (PlayaModelo? playa) {
                 setState(() {
-                  playaIdSeleccionada = value;
-                  if (value != null) {
-                    final selectedPlaya = playasMalaga.firstWhere((p) => p.id == value);
-                    nombrePlayaSeleccionada = selectedPlaya.nombre;
+                  if (playa != null) {
+                    playaIdSeleccionada = playa.id;
+                    nombrePlayaSeleccionada = playa.nombre;
+                    latitudPlayaSeleccionada = playa.latitud;   // 📍 Capturamos latitud
+                    longitudPlayaSeleccionada = playa.longitud; // 📍 Capturamos longitud
                   } else {
+                    playaIdSeleccionada = null;
                     nombrePlayaSeleccionada = null;
+                    latitudPlayaSeleccionada = null;
+                    longitudPlayaSeleccionada = null;
                   }
                 });
               },
@@ -192,7 +205,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
                 ),
                 onPressed: (medusaIdSeleccionada == null || playaIdSeleccionada == null)
                     ? null
-                    : _guardarReporte, // 👈 Llamamos al método limpio
+                    : _guardarReporte,
                 child: const Text(
                   'Guardar Reporte',
                   style: TextStyle(fontSize: 16, color: Colors.white),
@@ -206,7 +219,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
   }
 }
 
-// 🧩 Widget privado auxiliar para la AppBar (mantiene la vista limpia)
+// 🧩 Widget privado auxiliar para la AppBar
 class _BotonContadorReportes extends StatelessWidget {
   const _BotonContadorReportes();
 
