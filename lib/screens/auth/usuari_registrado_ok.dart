@@ -60,13 +60,20 @@ class _UsuarioRegistradoOkState extends State<UsuarioRegistradoOk> {
     _mostrarError('Usuario borrado correctamente');
   }
 
+  /*
+     mounted  -->  Es una propiedad que tienen los StatefulWidget en Flutter.
+     Su valor es true si el widget sigue activo y visible en la pantalla, 
+     y pasa a ser false si el usuario ya ha salido de esa pantalla o 
+     si el widget ya ha sido destruido (disposed).
+  */
   void _salir() {
     if (mounted) Navigator.pop(context);
   }
 
   void _mostrarError(String msg) {
-    if (mounted)
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
   }
 
   @override
@@ -282,10 +289,11 @@ class _ActualizarUsuarioState extends State<ActualizarUsuarioPantalla> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() => _guardando = false);
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 

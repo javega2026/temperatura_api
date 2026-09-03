@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pantalla_lista_reportes.dart';
 import 'pantalla_ia.dart';
@@ -27,6 +26,60 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
   String nivelMedusas = '1 - 5';
   final List<String> opcionesMedusas = ['1 - 5', '6 - 15', 'Más de 15'];
 
+  // 🚀 Lógica de guardado separada en un método limpio
+  Future<void> _guardarReporte() async {
+    final ahora = DateTime.now();
+    final formatoFecha = '${ahora.day}/${ahora.month}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
+
+    final nuevoReporte = ReporteMedusaModelo(
+      nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
+      nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
+      imagen: imagenMedusaUrl ?? '',
+      playa: nombrePlayaSeleccionada ?? 'Desconocida',
+      provincia: 'Málaga',
+      nivelMedusas: nivelMedusas,
+      fechaHora: formatoFecha,
+    );
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('reportes_medusas')
+          .add(nuevoReporte.toMap());
+
+      // Limpiar formulario
+      setState(() {
+        playaIdSeleccionada = null;
+        nombrePlayaSeleccionada = null;
+        medusaIdSeleccionada = null;
+        nombreMedusaSeleccionada = null;
+        nombreEspecificoMedusa = null;
+        imagenMedusaUrl = null;
+        nivelMedusas = '1 - 5';
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Reporte guardado en Firebase con éxito! 🌊'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,12 +88,9 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         actions: [
+          // Botón de IA
           IconButton(
-            icon: const Icon(
-              Icons.auto_awesome,
-              size: 28,
-              color: Colors.white,
-            ),
+            icon: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
             tooltip: 'IA',
             onPressed: () {
               Navigator.push(
@@ -49,39 +99,8 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
               );
             },
           ),
-          // StreamBuilder para mostrar la cantidad real de reportes desde Firestore en tiempo real
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('reportes_medusas').snapshots(),
-            builder: (context, snapshot) {
-              int totalReportes = 0;
-              if (snapshot.hasData) {
-                totalReportes = snapshot.data!.docs.length;
-              }
-
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(foregroundColor: Colors.white),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PantallaListaReportes(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.list, color: Colors.white),
-                  label: Text(
-                    '$totalReportes',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          // Botón de Lista con contador en tiempo real
+          const _BotonContadorReportes(),
         ],
       ),
       body: Padding(
@@ -89,16 +108,14 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Selector de Playa modularizado
+            // 1. Selector de Playa
             WidgetSelectorPlaya(
               playaIdSeleccionada: playaIdSeleccionada,
               onPlayaSelected: (value) {
                 setState(() {
                   playaIdSeleccionada = value;
                   if (value != null) {
-                    final selectedPlaya = playasMalaga.firstWhere(
-                      (p) => p.id == value,
-                    );
+                    final selectedPlaya = playasMalaga.firstWhere((p) => p.id == value);
                     nombrePlayaSeleccionada = selectedPlaya.nombre;
                   } else {
                     nombrePlayaSeleccionada = null;
@@ -109,7 +126,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
 
             const SizedBox(height: 25),
 
-            // 2. Selector de Medusa modularizado
+            // 2. Selector de Medusa
             WidgetSelectorMedusa(
               medusaIdSeleccionada: medusaIdSeleccionada,
               onMedusaSelected: (value) async {
@@ -125,7 +142,6 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
                     final data = doc.data() as Map<String, dynamic>;
                     setState(() {
                       nombreMedusaSeleccionada = data['nombre'] ?? '';
-                      // Lee 'nombreCientifico' tal cual está guardado en tu base de datos de Firestore
                       nombreEspecificoMedusa = data['nombreCientifico'] ?? data['nombre_cientifico'] ?? '';
                       imagenMedusaUrl = data['url'] ?? '';
                     });
@@ -165,7 +181,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
 
             const Spacer(),
 
-            // Botón Guardar en Firestore usando el Modelo
+            // 4. Botón Guardar
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -176,60 +192,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
                 ),
                 onPressed: (medusaIdSeleccionada == null || playaIdSeleccionada == null)
                     ? null
-                    : () async {
-                        final ahora = DateTime.now();
-                        final formatoFecha = '${ahora.day}/${ahora.month}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-
-                        // Creamos la instancia del modelo con todos los datos requeridos
-                        final nuevoReporte = ReporteMedusaModelo(
-                          nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
-                          nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
-                          imagen: imagenMedusaUrl ?? '',
-                          playa: nombrePlayaSeleccionada ?? 'Desconocida',
-                          provincia: 'Málaga',
-                          nivelMedusas: nivelMedusas,
-                          fechaHora: formatoFecha,
-                        );
-
-                        try {
-                          // Guardamos directamente en la colección de Firestore usando .toMap()
-                          await FirebaseFirestore.instance
-                              .collection('reportes_medusas')
-                              .add(nuevoReporte.toMap());
-
-                          // 🧹 LIMPIAR LOS DATOS Y RESETEAR EL FORMULARIO
-                          setState(() {
-                            playaIdSeleccionada = null;
-                            nombrePlayaSeleccionada = null;
-                            medusaIdSeleccionada = null;
-                            nombreMedusaSeleccionada = null;
-                            nombreEspecificoMedusa = null;
-                            imagenMedusaUrl = null;
-                            nivelMedusas = '1 - 5';
-                          });
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('¡Reporte guardado en Firebase con éxito! 🌊'),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                                duration: Duration(seconds: 3),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error al guardar: $e'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        }
-                      },
+                    : _guardarReporte, // 👈 Llamamos al método limpio
                 child: const Text(
                   'Guardar Reporte',
                   style: TextStyle(fontSize: 16, color: Colors.white),
@@ -239,6 +202,47 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// 🧩 Widget privado auxiliar para la AppBar (mantiene la vista limpia)
+class _BotonContadorReportes extends StatelessWidget {
+  const _BotonContadorReportes();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('reportes_medusas').snapshots(),
+      builder: (context, snapshot) {
+        int totalReportes = 0;
+        if (snapshot.hasData) {
+          totalReportes = snapshot.data!.docs.length;
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PantallaListaReportes(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.list, color: Colors.white),
+            label: Text(
+              '$totalReportes',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

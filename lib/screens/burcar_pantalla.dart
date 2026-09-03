@@ -22,7 +22,7 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
   void initState() {
     super.initState();
 
-    // **************************
+    // ************** por defecto es Málaga **************************************
 
     _controladorCiudad.text = 'Málaga';
 
