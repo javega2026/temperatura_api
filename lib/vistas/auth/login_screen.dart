@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // 1. Importar Firestore
-import 'package:meteoflutter/screens/auth/usuari_registrado_ok.dart';
+import 'package:meteoflutter/vistas/auth/usuari_registrado_ok.dart';
 import 'registro_screen.dart';
 import '../formulario_medusas_usuario/crear_medusa_pantalla.dart';
 
