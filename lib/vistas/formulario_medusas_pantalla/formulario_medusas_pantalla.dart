@@ -5,9 +5,8 @@ import 'package:meteoflutter/models/reporte_medusa_modelo.dart';
 
 import 'package:meteoflutter/vistas/pantalla_ia/pantalla_ia.dart';
 
-
-import 'package:meteoflutter/widgets/usuario_guarda_medusa/widget_selector_playa.dart';
-import 'package:meteoflutter/widgets/usuario_guarda_medusa/widget_selector_medusa.dart';
+import 'package:meteoflutter/vistas/lista_reportes_medusas/widget_selector_playa.dart';
+import 'package:meteoflutter/vistas/lista_reportes_medusas/widget_selector_medusa.dart';
 
 import 'widgets_formulario_medusas_pantalla.dart';
 
@@ -32,153 +31,170 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
   String nivelMedusas = '1 - 5';
   final List<String> opcionesMedusas = ['1 - 5', '6 - 15', 'Más de 15'];
 
-  Future<void> _guardarReporte() async {
-    final ahora = DateTime.now();
-    final formatoFecha = '${ahora.day}/${ahora.month}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
+  Key _keyPlaya = UniqueKey();
+  Key _keyMedusa = UniqueKey();
 
-    final playaSeleccionadaObj = playasAndalucia.firstWhere((p) => p.id == playaIdSeleccionada);
+Future<void> _guardarReporte() async {
+  final ahora = DateTime.now();
+  final formatoFecha = '${ahora.day.toString().padLeft(2, '0')}/${ahora.month.toString().padLeft(2, '0')}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
 
-    final nuevoReporte = ReporteMedusaModelo(
-      nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
-      nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
-      imagen: imagenMedusaUrl ?? '',
-      playa: nombrePlayaSeleccionada ?? 'Desconocida',
-      provincia: playaSeleccionadaObj.provincia,
-      nivelMedusas: nivelMedusas,
-      fechaHora: formatoFecha,
-      latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,
-      longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud,
-    );
+  final playaSeleccionadaObj = playasAndalucia.firstWhere((p) => p.id == playaIdSeleccionada);
 
-    try {
-      await FirebaseFirestore.instance
-          .collection('reportes_medusas')
-          .add(nuevoReporte.toMap());
+  final nuevoReporte = ReporteMedusaModelo(
+    nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
+    nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
+    imagen: imagenMedusaUrl ?? '',
+    playa: nombrePlayaSeleccionada ?? 'Desconocida',
+    provincia: playaSeleccionadaObj.provincia,
+    nivelMedusas: nivelMedusas,
+    fechaHora: formatoFecha,
+    latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,
+    longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud,
+  );
 
-      setState(() {
-        playaIdSeleccionada = null;
-        nombrePlayaSeleccionada = null;
-        latitudPlayaSeleccionada = null;
-        longitudPlayaSeleccionada = null;
-        medusaIdSeleccionada = null;
-        nombreMedusaSeleccionada = null;
-        nombreEspecificoMedusa = null;
-        imagenMedusaUrl = null;
-        nivelMedusas = '1 - 5';
-      });
+  try {
+    // Convertimos el modelo a Map y añadimos el timestamp del servidor para poder ordenar
+    final datosAInsertar = nuevoReporte.toMap();
+    datosAInsertar['timestamp'] = FieldValue.serverTimestamp();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Reporte con coordenadas guardado en Firebase con éxito! 🌊'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+    await FirebaseFirestore.instance
+        .collection('reportes_medusas')
+        .add(datosAInsertar);
+
+    setState(() {
+      playaIdSeleccionada = null;
+      nombrePlayaSeleccionada = null;
+      latitudPlayaSeleccionada = null;
+      longitudPlayaSeleccionada = null;
+
+      medusaIdSeleccionada = null;
+      nombreMedusaSeleccionada = null;
+      nombreEspecificoMedusa = null;
+      imagenMedusaUrl = null;
+
+      nivelMedusas = '1 - 5';
+
+      _keyPlaya = UniqueKey();
+      _keyMedusa = UniqueKey();
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Reporte guardado con éxito! 🌊'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reporte de Medusas'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
-            tooltip: 'IA',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PantallaIa()),
-              );
-            },
-          ),
-          const BotonContadorReportes(),
-        ],
-      ),
+      resizeToAvoidBottomInset: false,
+appBar: AppBar(
+  title: const Text('Reporte de Medusas'),
+  backgroundColor: Colors.blueAccent,
+  foregroundColor: Colors.white,
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
+      tooltip: 'IA',
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PantallaIa()),
+        );
+      },
+    ),
+    const BotonContadorReportes(),
+  ],
+),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            WidgetSelectorPlaya(
-              playaIdSeleccionada: playaIdSeleccionada,
-              onPlayaSelected: (PlayaModelo? playa) {
-                setState(() {
-                  if (playa != null) {
-                    playaIdSeleccionada = playa.id;
-                    nombrePlayaSeleccionada = playa.nombre;
-                    latitudPlayaSeleccionada = playa.latitud;
-                    longitudPlayaSeleccionada = playa.longitud;
-                  } else {
-                    playaIdSeleccionada = null;
-                    nombrePlayaSeleccionada = null;
-                    latitudPlayaSeleccionada = null;
-                    longitudPlayaSeleccionada = null;
-                  }
-                });
-              },
-            ),
-
-            const SizedBox(height: 25),
-
-            WidgetSelectorMedusa(
-              medusaIdSeleccionada: medusaIdSeleccionada,
-              onMedusaSelected: (value) async {
-                setState(() {
-                  medusaIdSeleccionada = value;
-                });
-                if (value != null) {
-                  final doc = await FirebaseFirestore.instance
-                      .collection('datos_medusas')
-                      .doc(value)
-                      .get();
-                  if (doc.exists) {
-                    final data = doc.data() as Map<String, dynamic>;
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                WidgetSelectorPlaya(
+                  key: _keyPlaya,
+                  playaIdSeleccionada: playaIdSeleccionada,
+                  onPlayaSelected: (PlayaModelo? playa) {
                     setState(() {
-                      nombreMedusaSeleccionada = data['nombre'] ?? '';
-                      nombreEspecificoMedusa = data['nombreCientifico'] ?? data['nombre_cientifico'] ?? '';
-                      imagenMedusaUrl = data['url'] ?? '';
+                      if (playa != null) {
+                        playaIdSeleccionada = playa.id;
+                        nombrePlayaSeleccionada = playa.nombre;
+                        latitudPlayaSeleccionada = playa.latitud;
+                        longitudPlayaSeleccionada = playa.longitud;
+                      } else {
+                        playaIdSeleccionada = null;
+                        nombrePlayaSeleccionada = null;
+                        latitudPlayaSeleccionada = null;
+                        longitudPlayaSeleccionada = null;
+                      }
                     });
-                  }
-                } else {
-                  setState(() {
-                    nombreMedusaSeleccionada = null;
-                    nombreEspecificoMedusa = null;
-                    imagenMedusaUrl = null;
-                  });
-                }
-              },
+                  },
+                ),
+
+                const SizedBox(height: 25),
+
+                WidgetSelectorMedusa(
+                  key: _keyMedusa,
+                  medusaIdSeleccionada: medusaIdSeleccionada,
+                  onMedusaSelected: (value) async {
+                    setState(() {
+                      medusaIdSeleccionada = value;
+                    });
+                    if (value != null) {
+                      final doc = await FirebaseFirestore.instance
+                          .collection('datos_medusas')
+                          .doc(value)
+                          .get();
+                      if (doc.exists) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        setState(() {
+                          nombreMedusaSeleccionada = data['nombre'] ?? '';
+                          nombreEspecificoMedusa = data['nombreCientifico'] ?? data['nombre_cientifico'] ?? '';
+                          imagenMedusaUrl = data['url'] ?? '';
+                        });
+                      }
+                    } else {
+                      setState(() {
+                        nombreMedusaSeleccionada = null;
+                        nombreEspecificoMedusa = null;
+                        imagenMedusaUrl = null;
+                      });
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 30),
+
+                WidgetSelectorNivelMedusas(
+                  nivelSeleccionado: nivelMedusas,
+                  opciones: opcionesMedusas,
+                  onNivelChanged: (nuevoNivel) {
+                    nivelMedusas = nuevoNivel;
+                  },
+                ),
+              ],
             ),
-
-            const SizedBox(height: 30),
-
-            WidgetSelectorNivelMedusas(
-              nivelSeleccionado: nivelMedusas,
-              opciones: opcionesMedusas,
-              onNivelChanged: (nuevoNivel) {
-                setState(() {
-                  nivelMedusas = nuevoNivel;
-                });
-              },
-            ),
-
-            const Spacer(),
 
             SizedBox(
               width: double.infinity,
