@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'pantalla_lista_reportes.dart';
-import 'pantalla_ia.dart';
-import 'package:meteoflutter/models/playa_modelo1.dart'; 
+import 'package:meteoflutter/models/playa_modelo1.dart';
 import 'package:meteoflutter/models/reporte_medusa_modelo.dart';
-import '/widgets/usuario_guarda_medusa/widget_selector_playa.dart';
-import '/widgets/usuario_guarda_medusa/widget_selector_medusa.dart';
 
-class PantallaMedusas extends StatefulWidget {
-  const PantallaMedusas({super.key});
+import 'package:meteoflutter/vistas/pantalla_ia/pantalla_ia.dart';
+
+
+import 'package:meteoflutter/widgets/usuario_guarda_medusa/widget_selector_playa.dart';
+import 'package:meteoflutter/widgets/usuario_guarda_medusa/widget_selector_medusa.dart';
+
+import 'widgets_formulario_medusas_pantalla.dart';
+
+class FormularioMedusasPantalla extends StatefulWidget {
+  const FormularioMedusasPantalla({super.key});
 
   @override
-  State<PantallaMedusas> createState() => _PantallaMedusasState();
+  State<FormularioMedusasPantalla> createState() => _FormularioMedusasPantallaState();
 }
 
-class _PantallaMedusasState extends State<PantallaMedusas> {
+class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
   String? playaIdSeleccionada;
   String? nombrePlayaSeleccionada;
-  double? latitudPlayaSeleccionada;  // 📍 Variable para la latitud
-  double? longitudPlayaSeleccionada; // 📍 Variable para la longitud
+  double? latitudPlayaSeleccionada;
+  double? longitudPlayaSeleccionada;
 
   String? medusaIdSeleccionada;
   String? nombreMedusaSeleccionada;
@@ -28,12 +32,10 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
   String nivelMedusas = '1 - 5';
   final List<String> opcionesMedusas = ['1 - 5', '6 - 15', 'Más de 15'];
 
-  // 🚀 Lógica de guardado incluyendo latitud y longitud
   Future<void> _guardarReporte() async {
     final ahora = DateTime.now();
     final formatoFecha = '${ahora.day}/${ahora.month}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
 
-    // Obtenemos el objeto completo de la playa elegida en el modelo de Andalucía
     final playaSeleccionadaObj = playasAndalucia.firstWhere((p) => p.id == playaIdSeleccionada);
 
     final nuevoReporte = ReporteMedusaModelo(
@@ -44,8 +46,8 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
       provincia: playaSeleccionadaObj.provincia,
       nivelMedusas: nivelMedusas,
       fechaHora: formatoFecha,
-      latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,   // 📍 Guardamos latitud
-      longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud, // 📍 Guardamos longitud
+      latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,
+      longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud,
     );
 
     try {
@@ -53,7 +55,6 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
           .collection('reportes_medusas')
           .add(nuevoReporte.toMap());
 
-      // Limpiar formulario por completo
       setState(() {
         playaIdSeleccionada = null;
         nombrePlayaSeleccionada = null;
@@ -97,7 +98,6 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         actions: [
-          // Botón de IA
           IconButton(
             icon: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
             tooltip: 'IA',
@@ -108,8 +108,7 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
               );
             },
           ),
-          // Botón de Lista con contador en tiempo real
-          const _BotonContadorReportes(),
+          const BotonContadorReportes(),
         ],
       ),
       body: Padding(
@@ -117,7 +116,6 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Selector de Playa (Adaptado para recibir el objeto PlayaModelo desde el widget)
             WidgetSelectorPlaya(
               playaIdSeleccionada: playaIdSeleccionada,
               onPlayaSelected: (PlayaModelo? playa) {
@@ -125,8 +123,8 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
                   if (playa != null) {
                     playaIdSeleccionada = playa.id;
                     nombrePlayaSeleccionada = playa.nombre;
-                    latitudPlayaSeleccionada = playa.latitud;   // 📍 Capturamos latitud
-                    longitudPlayaSeleccionada = playa.longitud; // 📍 Capturamos longitud
+                    latitudPlayaSeleccionada = playa.latitud;
+                    longitudPlayaSeleccionada = playa.longitud;
                   } else {
                     playaIdSeleccionada = null;
                     nombrePlayaSeleccionada = null;
@@ -139,7 +137,6 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
 
             const SizedBox(height: 25),
 
-            // 2. Selector de Medusa
             WidgetSelectorMedusa(
               medusaIdSeleccionada: medusaIdSeleccionada,
               onMedusaSelected: (value) async {
@@ -171,30 +168,18 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
 
             const SizedBox(height: 30),
 
-            // 3. Sección Nivel de Medusas
-            const Text(
-              'Nivel de medusas:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: opcionesMedusas.map((opcion) {
-                return ChoiceChip(
-                  label: Text(opcion),
-                  selected: nivelMedusas == opcion,
-                  onSelected: (selected) {
-                    setState(() {
-                      nivelMedusas = opcion;
-                    });
-                  },
-                );
-              }).toList(),
+            WidgetSelectorNivelMedusas(
+              nivelSeleccionado: nivelMedusas,
+              opciones: opcionesMedusas,
+              onNivelChanged: (nuevoNivel) {
+                setState(() {
+                  nivelMedusas = nuevoNivel;
+                });
+              },
             ),
 
             const Spacer(),
 
-            // 4. Botón Guardar
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -215,47 +200,6 @@ class _PantallaMedusasState extends State<PantallaMedusas> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// 🧩 Widget privado auxiliar para la AppBar
-class _BotonContadorReportes extends StatelessWidget {
-  const _BotonContadorReportes();
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('reportes_medusas').snapshots(),
-      builder: (context, snapshot) {
-        int totalReportes = 0;
-        if (snapshot.hasData) {
-          totalReportes = snapshot.data!.docs.length;
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PantallaListaReportes(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.list, color: Colors.white),
-            label: Text(
-              '$totalReportes',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

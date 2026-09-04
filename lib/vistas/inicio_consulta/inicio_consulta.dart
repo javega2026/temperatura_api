@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:meteoflutter/servicios/clima_servicio1.dart';
-import 'package:meteoflutter/vistas/temperatura_pantalla_dinamica.dart';
+import 'package:meteoflutter/vistas/temperatura_dinamica/temperatura_pantalla_dinamica.dart';
 
 import 'widgets_inicio_consulta.dart';
 

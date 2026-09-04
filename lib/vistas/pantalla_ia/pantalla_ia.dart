@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../servicios/ia_servicio.dart';
+import '../../servicios/ia_servicio.dart';
 
 class PantallaIa extends StatelessWidget {
   const PantallaIa({super.key});
