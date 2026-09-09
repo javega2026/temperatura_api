@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:meteoflutter/vistas/auth/login_screen.dart';
-
 // Campo para escribir la ciudad/provincia
 class CampoCiudad extends StatelessWidget {
   final TextEditingController controller;
@@ -40,8 +38,6 @@ class BotonesConsulta extends StatelessWidget {
     required this.onBuscar,
   });
 
-
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -64,35 +60,6 @@ class BotonesConsulta extends StatelessWidget {
                     'Consultar Clima',
                     style: TextStyle(fontSize: 16),
                   ),
-          ),
-        ),
-        const SizedBox(height: 32),
-      
-      
-        SizedBox(
-          width: double.infinity,
-          height: 45,
-          child: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.indigo,
-              side: BorderSide(color: Colors.indigo.shade300),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(Icons.login),
-            label: const Text(
-              'Iniciar Sesión',
-              style: TextStyle(fontSize: 15),
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
-              );
-            },
           ),
         ),
       ],
