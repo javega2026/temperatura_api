@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meteoflutter/models/playa_modelo1.dart';
 import 'package:meteoflutter/models/reporte_medusa_modelo.dart';
+import 'package:meteoflutter/models/provincia_costera.dart';
 
 import 'package:meteoflutter/vistas/pantalla_ia/pantalla_ia.dart';
 
@@ -38,6 +39,26 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
 
   Key _keyPlaya = UniqueKey();
   Key _keyMedusa = UniqueKey();
+
+  /// Comprueba si la ciudad está en la lista de provincias costeras
+bool get _esProvinciaCostera {
+  final ciudad = widget.ciudadInicial.toLowerCase().trim();
+
+  return provinciasCosterasEspana.any((p) {
+    final nombrePrincipal = p.nombre.toLowerCase();
+    
+    // 1. Compara con el nombre principal
+    if (ciudad.contains(nombrePrincipal) || nombrePrincipal.contains(ciudad)) {
+      return true;
+    }
+
+    // 2. Compara con la lista de alias
+    return p.alias.any((alias) {
+      final a = alias.toLowerCase();
+      return ciudad.contains(a) || a.contains(ciudad);
+    });
+  });
+}
 
   Future<void> _guardarReporte() async {
     final ahora = DateTime.now();
@@ -109,66 +130,53 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      appBar: AppBar(
+        title: const Text('Reporte de Medusas'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+        actions: [
+          if (_esProvinciaCostera)
+            IconButton(
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.25),
+                shape: const CircleBorder(),
+              ),
+              icon: ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [
+                    Colors.amberAccent,
+                    Colors.pinkAccent,
+                    Colors.cyanAccent,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  size: 24.0,
+                  color: Colors.white,
+                ),
+              ),
+              tooltip: 'Consultar Informe IA',
+              onPressed: () {
+                final ciudad = widget.ciudadInicial;
 
+                debugPrint('--------------------------------------------------');
+                debugPrint('🤖 [LOG 2 - FORMULARIO] Pulsado botón IA');
+                debugPrint('   -> Ciudad enviada a PantallaIa: "$ciudad"');
+                debugPrint('--------------------------------------------------');
 
-
-    appBar: AppBar(
-  title: const Text('Reporte de Medusas'),
-  backgroundColor: Colors.blueAccent,
-  foregroundColor: Colors.white,
-  actions: [
-  
-
-IconButton(
-  style: IconButton.styleFrom(
-    backgroundColor: Colors.white.withValues(alpha: 0.25), // Moderno sin deprecation
-    shape: const CircleBorder(),
-  ),
-  icon: ShaderMask(
-    shaderCallback: (bounds) => const LinearGradient(
-      colors: [
-        Colors.amberAccent,
-        Colors.pinkAccent,
-        Colors.cyanAccent,
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ).createShader(bounds),
-    child: const Icon(
-      Icons.auto_awesome,
-      size: 24.0,
-      color: Colors.white,
-    ),
-  ),
-  tooltip: 'Consultar Informe IA',
-  onPressed: () {
-    final ciudad = widget.ciudadInicial;
-
-    debugPrint('--------------------------------------------------');
-    debugPrint('🤖 [LOG 2 - FORMULARIO] Pulsado botón IA');
-    debugPrint('   -> Ciudad enviada a PantallaIa: "$ciudad"');
-    debugPrint('--------------------------------------------------');
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PantallaIa(ciudad: ciudad),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PantallaIa(ciudad: ciudad),
+                  ),
+                );
+              },
+            ),
+          const BotonContadorReportes(),
+        ],
       ),
-    );
-  },
-),
-
-
-
-
-
-    const BotonContadorReportes(),
-  ],
-),
-
-
-
-
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
