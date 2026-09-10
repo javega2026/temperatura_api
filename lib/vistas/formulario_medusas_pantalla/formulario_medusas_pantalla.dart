@@ -109,32 +109,66 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: const Text('Reporte de Medusas'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome),
-            onPressed: () {
-              final ciudad = widget.ciudadInicial;
 
-              debugPrint('--------------------------------------------------');
-              debugPrint('🤖 [LOG 2 - FORMULARIO] Pulsado botón IA');
-              debugPrint('   -> Ciudad enviada a PantallaIa: "$ciudad"');
-              debugPrint('--------------------------------------------------');
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PantallaIa(ciudad: ciudad),
-                ),
-              );
-            },
-          ),
-          const BotonContadorReportes(),
-        ],
+
+    appBar: AppBar(
+  title: const Text('Reporte de Medusas'),
+  backgroundColor: Colors.blueAccent,
+  foregroundColor: Colors.white,
+  actions: [
+  
+
+IconButton(
+  style: IconButton.styleFrom(
+    backgroundColor: Colors.white.withValues(alpha: 0.25), // Moderno sin deprecation
+    shape: const CircleBorder(),
+  ),
+  icon: ShaderMask(
+    shaderCallback: (bounds) => const LinearGradient(
+      colors: [
+        Colors.amberAccent,
+        Colors.pinkAccent,
+        Colors.cyanAccent,
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(bounds),
+    child: const Icon(
+      Icons.auto_awesome,
+      size: 24.0,
+      color: Colors.white,
+    ),
+  ),
+  tooltip: 'Consultar Informe IA',
+  onPressed: () {
+    final ciudad = widget.ciudadInicial;
+
+    debugPrint('--------------------------------------------------');
+    debugPrint('🤖 [LOG 2 - FORMULARIO] Pulsado botón IA');
+    debugPrint('   -> Ciudad enviada a PantallaIa: "$ciudad"');
+    debugPrint('--------------------------------------------------');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PantallaIa(ciudad: ciudad),
       ),
+    );
+  },
+),
+
+
+
+
+
+    const BotonContadorReportes(),
+  ],
+),
+
+
+
+
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
