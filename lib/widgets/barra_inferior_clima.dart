@@ -21,11 +21,6 @@ class BarraInferiorClima extends StatelessWidget {
     required this.nombreCiudad,
   });
 
-  bool _esMalaga() {
-    final ciudadLower = nombreCiudad.toLowerCase();
-    return ciudadLower.contains('málaga') || ciudadLower.contains('malaga');
-  }
-
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
@@ -67,41 +62,26 @@ class BarraInferiorClima extends StatelessWidget {
               ),
             ),
 
-            // Botón derecho (Medusas) con validación de Málaga
+            // Botón derecho (Medusas) libre de restricciones
             IconButton(
               icon: const Icon(
                 Icons.warning_amber_rounded,
                 color: Colors.white,
               ),
               onPressed: () {
-                if (_esMalaga()) {
-                  if (onActualizarPressed != null) {
-                    onActualizarPressed!();
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FormularioMedusasPantalla(),
-                      ),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Los reportes de medusas solo están disponibles para Málaga.',
-                      ),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                      margin: EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        bottom: 80,
-                      ),
-                      duration: Duration(seconds: 3),
+                debugPrint('--------------------------------------------------');
+                debugPrint('📍 [LOG 1 - BARRA INFERIOR] Navegando a Formulario');
+                debugPrint('   -> Ciudad transmitida: "$nombreCiudad"');
+                debugPrint('--------------------------------------------------');
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FormularioMedusasPantalla(
+                      ciudadInicial: nombreCiudad,
                     ),
-                  );
-                }
+                  ),
+                );
               },
               tooltip: 'Rango de Medusas',
             ),

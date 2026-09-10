@@ -11,7 +11,12 @@ import 'package:meteoflutter/vistas/lista_reportes_medusas/widget_selector_medus
 import 'widgets_formulario_medusas_pantalla.dart';
 
 class FormularioMedusasPantalla extends StatefulWidget {
-  const FormularioMedusasPantalla({super.key});
+  final String ciudadInicial;
+
+  const FormularioMedusasPantalla({
+    super.key,
+    required this.ciudadInicial,
+  });
 
   @override
   State<FormularioMedusasPantalla> createState() => _FormularioMedusasPantallaState();
@@ -34,95 +39,102 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
   Key _keyPlaya = UniqueKey();
   Key _keyMedusa = UniqueKey();
 
-Future<void> _guardarReporte() async {
-  final ahora = DateTime.now();
-  final formatoFecha = '${ahora.day.toString().padLeft(2, '0')}/${ahora.month.toString().padLeft(2, '0')}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
+  Future<void> _guardarReporte() async {
+    final ahora = DateTime.now();
+    final formatoFecha = '${ahora.day.toString().padLeft(2, '0')}/${ahora.month.toString().padLeft(2, '0')}/${ahora.year} - ${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
 
-  final playaSeleccionadaObj = playasAndalucia.firstWhere((p) => p.id == playaIdSeleccionada);
+    final playaSeleccionadaObj = playasAndalucia.firstWhere((p) => p.id == playaIdSeleccionada);
 
-  final nuevoReporte = ReporteMedusaModelo(
-    nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
-    nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
-    imagen: imagenMedusaUrl ?? '',
-    playa: nombrePlayaSeleccionada ?? 'Desconocida',
-    provincia: playaSeleccionadaObj.provincia,
-    nivelMedusas: nivelMedusas,
-    fechaHora: formatoFecha,
-    latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,
-    longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud,
-  );
+    final nuevoReporte = ReporteMedusaModelo(
+      nombreComun: nombreMedusaSeleccionada ?? 'Desconocida',
+      nombreEspecifico: nombreEspecificoMedusa ?? 'Sin especificar',
+      imagen: imagenMedusaUrl ?? '',
+      playa: nombrePlayaSeleccionada ?? 'Desconocida',
+      provincia: playaSeleccionadaObj.provincia,
+      nivelMedusas: nivelMedusas,
+      fechaHora: formatoFecha,
+      latitud: latitudPlayaSeleccionada ?? playaSeleccionadaObj.latitud,
+      longitud: longitudPlayaSeleccionada ?? playaSeleccionadaObj.longitud,
+    );
 
-  try {
-    // Convertimos el modelo a Map y añadimos el timestamp del servidor para poder ordenar
-    final datosAInsertar = nuevoReporte.toMap();
-    datosAInsertar['timestamp'] = FieldValue.serverTimestamp();
+    try {
+      final datosAInsertar = nuevoReporte.toMap();
+      datosAInsertar['timestamp'] = FieldValue.serverTimestamp();
 
-    await FirebaseFirestore.instance
-        .collection('reportes_medusas')
-        .add(datosAInsertar);
+      await FirebaseFirestore.instance
+          .collection('reportes_medusas')
+          .add(datosAInsertar);
 
-    setState(() {
-      playaIdSeleccionada = null;
-      nombrePlayaSeleccionada = null;
-      latitudPlayaSeleccionada = null;
-      longitudPlayaSeleccionada = null;
+      setState(() {
+        playaIdSeleccionada = null;
+        nombrePlayaSeleccionada = null;
+        latitudPlayaSeleccionada = null;
+        longitudPlayaSeleccionada = null;
 
-      medusaIdSeleccionada = null;
-      nombreMedusaSeleccionada = null;
-      nombreEspecificoMedusa = null;
-      imagenMedusaUrl = null;
+        medusaIdSeleccionada = null;
+        nombreMedusaSeleccionada = null;
+        nombreEspecificoMedusa = null;
+        imagenMedusaUrl = null;
 
-      nivelMedusas = '1 - 5';
+        nivelMedusas = '1 - 5';
 
-      _keyPlaya = UniqueKey();
-      _keyMedusa = UniqueKey();
-    });
+        _keyPlaya = UniqueKey();
+        _keyMedusa = UniqueKey();
+      });
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Reporte guardado con éxito! 🌊'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al guardar: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Reporte guardado con éxito! 🌊'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-appBar: AppBar(
-  title: const Text('Reporte de Medusas'),
-  backgroundColor: Colors.blueAccent,
-  foregroundColor: Colors.white,
-  actions: [
-    IconButton(
-      icon: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
-      tooltip: 'IA',
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const PantallaIa()),
-        );
-      },
-    ),
-    const BotonContadorReportes(),
-  ],
-),
+      appBar: AppBar(
+        title: const Text('Reporte de Medusas'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            onPressed: () {
+              final ciudad = widget.ciudadInicial;
+
+              debugPrint('--------------------------------------------------');
+              debugPrint('🤖 [LOG 2 - FORMULARIO] Pulsado botón IA');
+              debugPrint('   -> Ciudad enviada a PantallaIa: "$ciudad"');
+              debugPrint('--------------------------------------------------');
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PantallaIa(ciudad: ciudad),
+                ),
+              );
+            },
+          ),
+          const BotonContadorReportes(),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
