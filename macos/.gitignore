@@ -1,7 +1,16 @@
-# Flutter-related
+# Flutter (archivos generados y librerías nativas de iOS)
 **/Flutter/ephemeral/
 **/Pods/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
 
-# Xcode-related
+# Xcode y macOS
 **/dgph
 **/xcuserdata/
+*.xcworkspace
+!.default.xcworkspace
+*.xcodeproj
+!.default.xcodeproj
+.DS_Store
