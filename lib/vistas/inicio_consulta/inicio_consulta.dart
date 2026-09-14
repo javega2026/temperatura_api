@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:meteoflutter/servicios/clima_servicio1.dart';
 import 'package:meteoflutter/vistas/temperatura_dinamica/temperatura_pantalla_dinamica.dart';
+import 'package:meteoflutter/widgets/responsive_body.dart'; // Importamos el widget reutilizable
 
 import 'widgets_inicio_consulta.dart';
 
@@ -72,51 +73,48 @@ class _InicioConsultaState extends State<InicioConsulta> {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.wb_sunny_rounded,
-                size: 80,
-                color: Colors.orangeAccent,
+      body: ResponsiveBody(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.wb_sunny_rounded,
+              size: 80,
+              color: Colors.orangeAccent,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              '¿Qué tiempo hace hoy?',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
               ),
+            ),
+            const SizedBox(height: 30),
+            CampoCiudad(
+              controller: _controladorCiudad,
+              onSubmitted: _buscarClima,
+            ),
+            const SizedBox(height: 20),
+            BotonesConsulta(
+              cargando: _cargando,
+              onBuscar: _buscarClima,
+            ),
+            if (_mensajeError != null) ...[
               const SizedBox(height: 20),
-              const Text(
-                '¿Qué tiempo hace hoy?',
-                style: TextStyle(
-                  fontSize: 24,
+              Text(
+                _mensajeError!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blueAccent,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
-              CampoCiudad(
-                controller: _controladorCiudad,
-                onSubmitted: _buscarClima,
-              ),
-              const SizedBox(height: 20),
-              BotonesConsulta(
-                cargando: _cargando,
-                onBuscar: _buscarClima,
-              ),
-              if (_mensajeError != null) ...[
-                const SizedBox(height: 20),
-                Text(
-                  _mensajeError!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );
