@@ -44,5 +44,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true # Habilita la generación automática de fuentes fallback (Noto) para Web
   assets:
     - .env
