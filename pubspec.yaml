@@ -5,40 +5,41 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.12.2
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   # --- Red y Utilidades ---
-  dio: ^5.11.0          # Cliente HTTP avanzado para peticiones a la API del clima
+  dio: ^5.7.0           # Cliente HTTP avanzado para peticiones a la API del clima
   intl: ^0.19.0         # Utilidades de internacionalización y formato de fechas/números
   flutter_dotenv: ^5.2.1 # Carga de variables de entorno seguras desde archivos .env
 
   # --- Interfaz y Gráficos ---
   cupertino_icons: ^1.0.8 # Iconos estilo iOS
-  fl_chart: ^1.2.0        # Generación de gráficos dinámicos para las estadísticas meteorológicas
+  fl_chart: ^0.69.0        # Generación de gráficos dinámicos para las estadísticas meteorológicas
 
   # --- Base de datos local y almacenamiento ---
+  hive: ^2.2.3
   hive_flutter: ^1.1.0    # Base de datos NoSQL ultrarrápida para almacenamiento local
 
   # --- Backend y Autenticación (Firebase) ---
   firebase_core: ^3.10.1   # Núcleo de inicialización para los servicios de Firebase
   cloud_firestore: ^5.6.2  # Base de datos en la nube NoSQL en tiempo real
   firebase_auth: ^5.4.1    # Sistema de autenticación de usuarios (Login y Registro)
-  firebase_analytics: ^11.0.0
+  firebase_analytics: ^11.4.1
 
   # --- Mapas (OpenStreetMap - Gratuito sin tarjeta) ---
   flutter_map: ^7.0.2
-  latlong2: ^0.9.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   # --- Herramientas de desarrollo y generación de código ---
-  flutter_lints: ^6.0.0   # Reglas de estilo y buenas prácticas de código en Flutter
+  flutter_lints: ^5.0.0   # Reglas de estilo y buenas prácticas de código en Flutter
   hive_generator: ^2.0.1  # Generador de adaptadores para Hive
   build_runner: ^2.4.13   # Automatizador para ejecutar los generadores de código
 

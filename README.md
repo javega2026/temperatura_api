@@ -28,6 +28,8 @@ Aplicación web y móvil desarrollada en **Flutter** para la consulta meteoroló
 | **Firebase Analytics** | Seguimiento de eventos y métricas de uso de la app. |
 | **OpenStreetMap** | Visualización de cartografía y coordenadas costeras. |
 
+
+## OpenStreetMap
 ---
 
 ## 🚀 Inicio Rápido
