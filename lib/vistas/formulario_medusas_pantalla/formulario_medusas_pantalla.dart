@@ -5,11 +5,11 @@ import 'package:meteoflutter/models/reporte_medusa_modelo.dart';
 import 'package:meteoflutter/models/provincia_costera.dart';
 
 import 'package:meteoflutter/vistas/pantalla_ia/pantalla_ia.dart';
-
 import 'package:meteoflutter/vistas/lista_reportes_medusas/widget_selector_playa.dart';
 import 'package:meteoflutter/vistas/lista_reportes_medusas/widget_selector_medusa.dart';
-
+import 'package:meteoflutter/widgets/responsive_body.dart';
 import 'widgets_formulario_medusas_pantalla.dart';
+import 'botones_formulario_medusas.dart';
 
 class FormularioMedusasPantalla extends StatefulWidget {
   final String ciudadInicial;
@@ -40,25 +40,22 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
   Key _keyPlaya = UniqueKey();
   Key _keyMedusa = UniqueKey();
 
-  /// Comprueba si la ciudad está en la lista de provincias costeras
-bool get _esProvinciaCostera {
-  final ciudad = widget.ciudadInicial.toLowerCase().trim();
+  bool get _esProvinciaCostera {
+    final ciudad = widget.ciudadInicial.toLowerCase().trim();
 
-  return provinciasCosterasEspana.any((p) {
-    final nombrePrincipal = p.nombre.toLowerCase();
-    
-    // 1. Compara con el nombre principal
-    if (ciudad.contains(nombrePrincipal) || nombrePrincipal.contains(ciudad)) {
-      return true;
-    }
+    return provinciasCosterasEspana.any((p) {
+      final nombrePrincipal = p.nombre.toLowerCase();
+      
+      if (ciudad.contains(nombrePrincipal) || nombrePrincipal.contains(ciudad)) {
+        return true;
+      }
 
-    // 2. Compara con la lista de alias
-    return p.alias.any((alias) {
-      final a = alias.toLowerCase();
-      return ciudad.contains(a) || a.contains(ciudad);
+      return p.alias.any((alias) {
+        final a = alias.toLowerCase();
+        return ciudad.contains(a) || a.contains(ciudad);
+      });
     });
-  });
-}
+  }
 
   Future<void> _guardarReporte() async {
     final ahora = DateTime.now();
@@ -128,8 +125,10 @@ bool get _esProvinciaCostera {
 
   @override
   Widget build(BuildContext context) {
+    final bool puedeGuardar = playaIdSeleccionada != null && medusaIdSeleccionada != null;
+
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Reporte de Medusas'),
         backgroundColor: Colors.blueAccent,
@@ -159,17 +158,10 @@ bool get _esProvinciaCostera {
               ),
               tooltip: 'Consultar Informe IA',
               onPressed: () {
-                final ciudad = widget.ciudadInicial;
-
-                debugPrint('--------------------------------------------------');
-                debugPrint('🤖 [LOG 2 - FORMULARIO] Pulsado botón IA');
-                debugPrint('   -> Ciudad enviada a PantallaIa: "$ciudad"');
-                debugPrint('--------------------------------------------------');
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PantallaIa(ciudad: ciudad),
+                    builder: (context) => PantallaIa(ciudad: widget.ciudadInicial),
                   ),
                 );
               },
@@ -177,13 +169,12 @@ bool get _esProvinciaCostera {
           const BotonContadorReportes(),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+      body: SafeArea(
+        child: ResponsiveBody(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 WidgetSelectorPlaya(
@@ -205,9 +196,7 @@ bool get _esProvinciaCostera {
                     });
                   },
                 ),
-
-                const SizedBox(height: 25),
-
+                const SizedBox(height: 16),
                 WidgetSelectorMedusa(
                   key: _keyMedusa,
                   medusaIdSeleccionada: medusaIdSeleccionada,
@@ -237,37 +226,23 @@ bool get _esProvinciaCostera {
                     }
                   },
                 ),
-
-                const SizedBox(height: 30),
-
+                const SizedBox(height: 20),
                 WidgetSelectorNivelMedusas(
                   nivelSeleccionado: nivelMedusas,
                   opciones: opcionesMedusas,
                   onNivelChanged: (nuevoNivel) {
-                    nivelMedusas = nuevoNivel;
+                    setState(() {
+                      nivelMedusas = nuevoNivel;
+                    });
                   },
+                ),
+                BotonesFormularioMedusas(
+                  puedeGuardar: puedeGuardar,
+                  onGuardar: _guardarReporte,
                 ),
               ],
             ),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: (medusaIdSeleccionada == null || playaIdSeleccionada == null)
-                    ? null
-                    : _guardarReporte,
-                child: const Text(
-                  'Guardar Reporte',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

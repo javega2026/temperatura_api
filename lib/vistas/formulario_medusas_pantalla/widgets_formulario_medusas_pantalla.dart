@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meteoflutter/vistas/pantalla_lista_reportes/pantalla_lista_reportes.dart';
 
-class WidgetSelectorNivelMedusas extends StatefulWidget {
+class WidgetSelectorNivelMedusas extends StatelessWidget {
   final String nivelSeleccionado;
   final List<String> opciones;
   final ValueChanged<String> onNivelChanged;
@@ -13,29 +13,6 @@ class WidgetSelectorNivelMedusas extends StatefulWidget {
     required this.opciones,
     required this.onNivelChanged,
   });
-
-  @override
-  State<WidgetSelectorNivelMedusas> createState() => _WidgetSelectorNivelMedusasState();
-}
-
-class _WidgetSelectorNivelMedusasState extends State<WidgetSelectorNivelMedusas> {
-  late String _nivelActual;
-
-  @override
-  void initState() {
-    super.initState();
-    _nivelActual = widget.nivelSeleccionado;
-  }
-
-  @override
-  void didUpdateWidget(covariant WidgetSelectorNivelMedusas oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.nivelSeleccionado != widget.nivelSeleccionado) {
-      setState(() {
-        _nivelActual = widget.nivelSeleccionado;
-      });
-    }
-  }
 
   Color _obtenerColorNivel(String nivel) {
     switch (nivel) {
@@ -61,20 +38,15 @@ class _WidgetSelectorNivelMedusasState extends State<WidgetSelectorNivelMedusas>
         ),
         const SizedBox(height: 10),
         Row(
-          children: widget.opciones.map((opcion) {
-            final isSelected = _nivelActual == opcion;
+          children: opciones.map((opcion) {
+            final isSelected = nivelSeleccionado == opcion;
             final colorBase = _obtenerColorNivel(opcion);
 
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _nivelActual = opcion;
-                    });
-                    widget.onNivelChanged(opcion);
-                  },
+                  onTap: () => onNivelChanged(opcion),
                   child: Container(
                     height: 42,
                     alignment: Alignment.center,
