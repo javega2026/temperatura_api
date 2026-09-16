@@ -11,7 +11,7 @@ class PantallaListaReportes extends StatefulWidget {
 }
 
 class _PantallaListaReportesState extends State<PantallaListaReportes> {
-  //el tiempo que tarda en desaparecer las alertas de medusas
+  // Tiempo que tardan en desaparecer las alertas (en minutos)
   static const int tiempoExpiracionMinutos = 5179;
 
   @override
@@ -20,32 +20,29 @@ class _PantallaListaReportesState extends State<PantallaListaReportes> {
     _eliminarReportesExpiradosDeFirestore();
   }
 
+  // Elimina de Firestore los reportes cuya fecha supere el tiempo límite
   Future<void> _eliminarReportesExpiradosDeFirestore() async {
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('reportes_medusas').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('reportes_medusas')
+          .get();
       final ahora = DateTime.now();
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final fechaStr = data['fecha_hora'] ?? '';
+        final Timestamp? timestamp = data['timestamp'] as Timestamp?;
 
-        if (fechaStr.isNotEmpty) {
-          final partes = fechaStr.split(' - ');
-          final fechaPartes = partes[0].split('/');
-          final horaPartes = partes[1].split(':');
-
-          final fechaCreacion = DateTime(
-            int.parse(fechaPartes[2]),
-            int.parse(fechaPartes[1]),
-            int.parse(fechaPartes[0]),
-            int.parse(horaPartes[0]),
-            int.parse(horaPartes[1]),
+        if (timestamp != null) {
+          final fechaCreacion = timestamp.toDate();
+          final fechaExpiracion = fechaCreacion.add(
+            const Duration(minutes: tiempoExpiracionMinutos),
           );
-          
-          final fechaExpiracion = fechaCreacion.add(const Duration(minutes: tiempoExpiracionMinutos));
 
           if (fechaExpiracion.isBefore(ahora)) {
-            await FirebaseFirestore.instance.collection('reportes_medusas').doc(doc.id).delete();
+            await FirebaseFirestore.instance
+                .collection('reportes_medusas')
+                .doc(doc.id)
+                .delete();
           }
         }
       }
@@ -54,33 +51,23 @@ class _PantallaListaReportesState extends State<PantallaListaReportes> {
     }
   }
 
-  String _calcularTiempoRestante(String fechaStr) {
-    try {
-      final partes = fechaStr.split(' - ');
-      final fechaPartes = partes[0].split('/');
-      final horaPartes = partes[1].split(':');
+  // Calcula la cuenta atrás usando el Timestamp de Firestore
+  String _calcularTiempoRestante(Timestamp? timestamp) {
+    if (timestamp == null) return 'Calculando...';
 
-      final fechaCreacion = DateTime(
-        int.parse(fechaPartes[2]),
-        int.parse(fechaPartes[1]),
-        int.parse(fechaPartes[0]),
-        int.parse(horaPartes[0]),
-        int.parse(horaPartes[1]),
-      );
-      
-      final fechaExpiracion = fechaCreacion.add(const Duration(minutes: tiempoExpiracionMinutos));
-      final diferencia = fechaExpiracion.difference(DateTime.now());
+    final fechaCreacion = timestamp.toDate();
+    final fechaExpiracion = fechaCreacion.add(
+      const Duration(minutes: tiempoExpiracionMinutos),
+    );
+    final diferencia = fechaExpiracion.difference(DateTime.now());
 
-      if (diferencia.isNegative) return 'Expirando...';
+    if (diferencia.isNegative) return 'Expirando...';
 
-      final horas = diferencia.inHours;
-      final minutos = diferencia.inMinutes % 60;
-      final segundos = diferencia.inSeconds % 60;
+    final horas = diferencia.inHours;
+    final minutos = diferencia.inMinutes % 60;
+    final segundos = diferencia.inSeconds % 60;
 
-      return horas > 0 ? '${horas}h ${minutos}m' : '${minutos}m ${segundos}s';
-    } catch (e) {
-      return 'Calculando...';
-    }
+    return horas > 0 ? '${horas}h ${minutos}m' : '${minutos}m ${segundos}s';
   }
 
   @override
@@ -92,7 +79,11 @@ class _PantallaListaReportesState extends State<PantallaListaReportes> {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('reportes_medusas').snapshots(),
+        // Ordena directamente desde Firestore usando 'timestamp' descendente (más nuevo primero)
+        stream: FirebaseFirestore.instance
+            .collection('reportes_medusas')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -115,9 +106,9 @@ class _PantallaListaReportesState extends State<PantallaListaReportes> {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
 
-              // Convertimos el documento utilizando tu Modelo
               final reporte = ReporteMedusaModelo.fromFirestore(data, doc.id);
-              final tiempoRestante = _calcularTiempoRestante(reporte.fechaHora);
+              final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+              final tiempoRestante = _calcularTiempoRestante(timestamp);
 
               return CardReporte(
                 reporte: reporte,
