@@ -11,7 +11,8 @@ class PantallaListaReportes extends StatefulWidget {
 }
 
 class _PantallaListaReportesState extends State<PantallaListaReportes> {
-  static const int tiempoExpiracionMinutos = 1179;
+  //el tiempo que tarda en desaparecer las alertas de medusas
+  static const int tiempoExpiracionMinutos = 5179;
 
   @override
   void initState() {

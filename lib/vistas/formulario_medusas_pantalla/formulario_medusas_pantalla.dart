@@ -125,6 +125,7 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
 
   @override
   Widget build(BuildContext context) {
+    final bool hayDatosIngresados = playaIdSeleccionada != null || medusaIdSeleccionada != null;
     final bool puedeGuardar = playaIdSeleccionada != null && medusaIdSeleccionada != null;
 
     return Scaffold(
@@ -237,6 +238,7 @@ class _FormularioMedusasPantallaState extends State<FormularioMedusasPantalla> {
                   },
                 ),
                 BotonesFormularioMedusas(
+                  hayDatosIngresados: hayDatosIngresados,
                   puedeGuardar: puedeGuardar,
                   onGuardar: _guardarReporte,
                 ),

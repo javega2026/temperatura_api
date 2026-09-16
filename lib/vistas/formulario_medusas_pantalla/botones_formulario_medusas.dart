@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:meteoflutter/vistas/mostrar_mapa_medusas/mostrar_mapa_medusas.dart';
 
 class BotonesFormularioMedusas extends StatelessWidget {
-  final bool puedeGuardar;
+  final bool hayDatosIngresados; // Controla si se están introduciendo datos
+  final bool puedeGuardar;        // Validaciones del formulario para habilitar/deshabilitar el botón de guardar
   final VoidCallback onGuardar;
 
   const BotonesFormularioMedusas({
     super.key,
+    required this.hayDatosIngresados,
     required this.puedeGuardar,
     required this.onGuardar,
   });
@@ -18,52 +20,58 @@ class BotonesFormularioMedusas extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.blueAccent,
-                side: const BorderSide(color: Colors.blueAccent, width: 1.5),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.map_outlined),
-              label: const Text(
-                'Ver Mapa de Medusas',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              onPressed: () {
-                if (!context.mounted) return;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MostrarMapaMedusas(),
+          // Muestra 'Ver Mapa' SOLO si NO se están introduciendo datos en el formulario
+          if (!hayDatosIngresados) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blueAccent,
+                  side: const BorderSide(color: Colors.blueAccent, width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-              },
+                ),
+                icon: const Icon(Icons.map_outlined),
+                label: const Text(
+                  'Ver Mapa de Medusas',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                onPressed: () {
+                  if (!context.mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MostrarMapaMedusas(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          ],
+
+          // Muestra 'Guardar Reporte' SOLO cuando SÍ hay datos ingresados
+          if (hayDatosIngresados) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: puedeGuardar ? onGuardar : null,
+                child: const Text(
+                  'Guardar Reporte',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
-              onPressed: puedeGuardar ? onGuardar : null,
-              child: const Text(
-                'Guardar Reporte',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
             ),
-          ),
+          ],
         ],
       ),
     );

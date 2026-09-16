@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -8,6 +9,8 @@ class MostrarMapaMedusas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Random random = Random();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mapa de Avistamientos'),
@@ -37,16 +40,28 @@ class MostrarMapaMedusas extends StatelessWidget {
           final List<Marker> marcadores = docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
 
-            final double lat = (data['latitud'] as num?)?.toDouble() ?? 0.0;
-            final double lng = (data['longitud'] as num?)?.toDouble() ?? 0.0;
+            final double latBase = (data['latitud'] as num?)?.toDouble() ?? 0.0;
+            final double lngBase = (data['longitud'] as num?)?.toDouble() ?? 0.0;
             final String playa = data['playa'] ?? 'Playa desconocida';
             final String provincia = data['provincia'] ?? '';
             final String medusa = data['nombre_comun'] ?? 'Medusa no especificada';
             final String nivel = data['nivel_medusas'] ?? 'N/A';
             final String? urlImagen = data['imagen'] as String?;
 
+            // Si la coordenada es válida (distinta de 0), aplicamos un pequeño offset
+            // de ~30 a 50 metros para evitar que múltiples marcadores en la misma playa tapen a los demás.
+            double latAjustada = latBase;
+            double lngAjustada = lngBase;
+
+            if (latBase != 0.0 && lngBase != 0.0) {
+              final double offsetLat = (random.nextDouble() - 0.5) * 0.0004;
+              final double offsetLng = (random.nextDouble() - 0.5) * 0.0004;
+              latAjustada += offsetLat;
+              lngAjustada += offsetLng;
+            }
+
             return Marker(
-              point: LatLng(lat, lng),
+              point: LatLng(latAjustada, lngAjustada),
               width: 40,
               height: 40,
               alignment: Alignment.topCenter,
